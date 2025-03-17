@@ -72,6 +72,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add a new poem (requires authentication)
+  app.post("/api/poems", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const poemSchema = z.object({
+        title: z.string().min(3),
+        content: z.string().min(10),
+        author: z.string().min(2),
+        description: z.string().optional(),
+        year: z.string().optional(),
+        category: z.string().min(1),
+        isPremium: z.boolean().default(false),
+        imageUrl: z.string().url(),
+        thumbnailUrl: z.string().url(),
+      });
+      
+      const parsedData = poemSchema.safeParse(req.body);
+      if (!parsedData.success) {
+        return res.status(400).json({ 
+          message: 'Invalid poem data', 
+          errors: parsedData.error.format() 
+        });
+      }
+      
+      // Check if poem with the same title already exists
+      const existingPoem = await storage.getPoemByTitle(parsedData.data.title);
+      if (existingPoem) {
+        return res.status(400).json({ message: 'Poem with this title already exists' });
+      }
+      
+      // Create new poem with null pentru campurile opționale
+      const newPoem = await storage.createPoem({
+        ...parsedData.data,
+        id: 0, // Will be set by storage
+        description: parsedData.data.description || null,
+        year: parsedData.data.year || null,
+        category: parsedData.data.category || null
+      });
+      
+      return res.status(201).json(newPoem);
+    } catch (error) {
+      console.error('Error creating poem:', error);
+      return res.status(500).json({ message: 'Failed to create poem' });
+    }
+  });
+  
   // Get a specific poem by ID
   app.get("/api/poems/:id", async (req, res) => {
     try {

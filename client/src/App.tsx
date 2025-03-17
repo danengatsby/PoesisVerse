@@ -7,11 +7,15 @@ import Home from "@/pages/Home";
 import Subscribe from "@/pages/Subscribe";
 import { AuthProvider } from "./context/AuthContext";
 
+// Importăm noul component
+import AddPoem from "@/pages/AddPoem";
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/subscribe" component={Subscribe} />
+      <Route path="/add-poem" component={AddPoem} />
       <Route component={NotFound} />
     </Switch>
   );
