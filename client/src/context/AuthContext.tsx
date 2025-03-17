@@ -38,17 +38,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const checkSession = async () => {
     try {
       const response = await apiRequest("GET", "/api/users/profile");
-      
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setIsSubscribed(userData.isSubscribed);
-        setIsLoading(false);
-      } else {
-        setUser(null);
-        setIsSubscribed(false);
-        setIsLoading(false);
-      }
+      // Dacă ajungem aici, înseamnă că request-ul a fost reușit (nu s-a aruncat excepție)
+      const userData = await response.json();
+      setUser(userData);
+      setIsSubscribed(userData.isSubscribed);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error checking session:", error);
       setUser(null);
