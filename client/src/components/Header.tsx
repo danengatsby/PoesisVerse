@@ -38,10 +38,8 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/">
-                <a className="flex-shrink-0">
-                  <span className="font-heading text-xl text-primary font-bold">PoesisVerse</span>
-                </a>
+              <Link href="/" className="flex-shrink-0">
+                <span className="font-heading text-xl text-primary font-bold">PoesisVerse</span>
               </Link>
             </div>
             
@@ -51,11 +49,11 @@ export default function Header() {
                   <span className="text-sm text-neutral-600">
                     Welcome, {user?.username}
                   </span>
-                  <Link href="/add-poem">
-                    <Button variant="outline" className="mr-2">
+                  <Button variant="outline" className="mr-2" asChild>
+                    <Link href="/add-poem">
                       Adăugare poem
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                   <Button variant="ghost" onClick={handleLogout}>
                     Log out
                   </Button>
@@ -93,12 +91,10 @@ export default function Header() {
                   <div className="px-4 py-2 text-sm text-neutral-600">
                     Signed in as {user?.username}
                   </div>
-                  <Link href="/add-poem">
-                    <button 
-                      className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition"
-                    >
+                  <Link href="/add-poem" className="block w-full">
+                    <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition">
                       Adăugare poem
-                    </button>
+                    </div>
                   </Link>
                   <button 
                     className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition"
