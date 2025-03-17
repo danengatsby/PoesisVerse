@@ -111,10 +111,8 @@ export default function Sidebar({ onPoemSelect, selectedPoemId, isMobile, onClos
               </div>
             ) : (
               <>
-                <Link href="/subscribe">
-                  <a className="block w-full px-4 py-2 bg-accent text-white rounded-md shadow-sm hover:bg-accent-dark font-ui font-medium text-sm transition-colors">
-                    Subscribe Now
-                  </a>
+                <Link href="/subscribe" className="block w-full px-4 py-2 bg-accent text-white rounded-md shadow-sm hover:bg-accent-dark font-ui font-medium text-sm transition-colors">
+                  Subscribe Now
                 </Link>
                 <p className="mt-2 text-xs text-neutral-600">Unlock all poems with premium access</p>
               </>
