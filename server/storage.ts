@@ -161,6 +161,8 @@ export class MemStorage implements IStorage {
     const newUser: User = { 
       ...user, 
       id, 
+      password: user.password || null,
+      firebaseUid: user.firebaseUid || null,
       isSubscribed: false,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
@@ -206,7 +208,8 @@ export class MemStorage implements IStorage {
     return Array.from(this.poems.values()).filter(poem => !poem.isPremium);
   }
 
-  async getPoemById(id: number): Promise<Poem | undefined> {
+  async getPoemById(id: number | null): Promise<Poem | undefined> {
+    if (id === null) return undefined;
     return this.poems.get(id);
   }
 
@@ -268,13 +271,16 @@ export class MemStorage implements IStorage {
       up => up.userId === userId && up.isBookmarked
     );
     
-    return Promise.all(
-      bookmarks.map(async bookmark => {
-        const poem = await this.getPoemById(bookmark.poemId);
-        if (!poem) throw new Error(`Poem with id ${bookmark.poemId} not found`);
-        return poem;
-      })
-    );
+    const poemPromises = bookmarks.map(async bookmark => {
+      if (bookmark.poemId === null) return null;
+      const poem = await this.getPoemById(bookmark.poemId);
+      if (!poem) throw new Error(`Poem with id ${bookmark.poemId} not found`);
+      return poem;
+    });
+    
+    const poems = await Promise.all(poemPromises);
+    // Filtrăm poemele null (în caz că există)
+    return poems.filter((poem): poem is Poem => poem !== null);
   }
 
   async removeBookmark(userId: number, poemId: number): Promise<void> {

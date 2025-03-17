@@ -86,7 +86,7 @@ export default function Header() {
               {isAuthenticated ? (
                 <>
                   <div className="px-4 py-2 text-sm text-neutral-600">
-                    Signed in as {user?.displayName || user?.email?.split('@')[0]}
+                    Signed in as {user?.username}
                   </div>
                   <button 
                     className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition"
