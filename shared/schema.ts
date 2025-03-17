@@ -10,7 +10,6 @@ export const users = pgTable("users", {
   isSubscribed: boolean("is_subscribed").default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  firebaseUid: text("firebase_uid").unique(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -38,7 +37,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
   password: true,
-  firebaseUid: true,
 });
 
 export const insertPoemSchema = createInsertSchema(poems);

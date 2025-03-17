@@ -4,7 +4,6 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User>;
   updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
@@ -152,17 +151,12 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
-  async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.firebaseUid === firebaseUid);
-  }
-
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const newUser: User = { 
       ...user, 
       id, 
       password: user.password || null,
-      firebaseUid: user.firebaseUid || null,
       isSubscribed: false,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
