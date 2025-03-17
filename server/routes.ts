@@ -5,7 +5,6 @@ import { z } from "zod";
 import Stripe from "stripe";
 import bcrypt from "bcryptjs";
 import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('Missing STRIPE_SECRET_KEY environment variable. Stripe functionality will not work.');
@@ -27,10 +26,8 @@ declare module 'express-session' {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure session middleware for express
   app.use(session({
-    store: new (connectPgSimple(session))({
-      // We'll use in-memory storage instead of PostgreSQL for sessions in this example
-      // In a production app, you would use the PostgreSQL connection options here
-    }),
+    // Using memory store for development
+    // In production, we would use PostgreSQL
     secret: process.env.SESSION_SECRET || 'poetrysecret123',
     resave: false,
     saveUninitialized: false,

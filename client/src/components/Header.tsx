@@ -51,6 +51,11 @@ export default function Header() {
                   <span className="text-sm text-neutral-600">
                     Welcome, {user?.username}
                   </span>
+                  <Link href="/add-poem">
+                    <Button variant="outline" className="mr-2">
+                      Adăugare poem
+                    </Button>
+                  </Link>
                   <Button variant="ghost" onClick={handleLogout}>
                     Log out
                   </Button>
@@ -88,6 +93,13 @@ export default function Header() {
                   <div className="px-4 py-2 text-sm text-neutral-600">
                     Signed in as {user?.username}
                   </div>
+                  <Link href="/add-poem">
+                    <button 
+                      className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition"
+                    >
+                      Adăugare poem
+                    </button>
+                  </Link>
                   <button 
                     className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition"
                     onClick={handleLogout}
