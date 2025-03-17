@@ -129,28 +129,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if premium content
       if (poem.isPremium) {
-        // Check if user is authenticated and subscribed
-        const { authorization } = req.headers;
-        if (authorization && authorization.startsWith('Bearer ')) {
-          const token = authorization.split('Bearer ')[1];
-          const user = await storage.getUserByFirebaseUid(token);
-          
-          if (!user || !user.isSubscribed) {
-            // Return poem with limited content for premium poems
-            return res.status(200).json({
-              ...poem,
-              content: poem.content.split('\n').slice(0, 2).join('\n') + '...',
-              isPremiumLocked: true
-            });
+        // Check if user is authenticated and subscribed through session
+        if (req.session.isAuthenticated && req.session.userId) {
+          const user = await storage.getUser(req.session.userId);
+          if (user && user.isSubscribed) {
+            // User is authenticated and subscribed, return full poem
+            return res.status(200).json(poem);
           }
-        } else {
-          // Not authenticated, return limited content
-          return res.status(200).json({
-            ...poem,
-            content: poem.content.split('\n').slice(0, 2).join('\n') + '...',
-            isPremiumLocked: true
-          });
         }
+        
+        // User either not authenticated or not subscribed
+        // Return poem with limited content for premium poems
+        return res.status(200).json({
+          ...poem,
+          content: poem.content.split('\n').slice(0, 2).join('\n') + '...',
+          isPremiumLocked: true
+        });
       }
       
       return res.status(200).json(poem);
@@ -172,25 +166,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if premium content (same logic as above)
       if (poem.isPremium) {
-        const { authorization } = req.headers;
-        if (authorization && authorization.startsWith('Bearer ')) {
-          const token = authorization.split('Bearer ')[1];
-          const user = await storage.getUserByFirebaseUid(token);
-          
-          if (!user || !user.isSubscribed) {
-            return res.status(200).json({
-              ...poem,
-              content: poem.content.split('\n').slice(0, 2).join('\n') + '...',
-              isPremiumLocked: true
-            });
+        // Check if user is authenticated and subscribed through session
+        if (req.session.isAuthenticated && req.session.userId) {
+          const user = await storage.getUser(req.session.userId);
+          if (user && user.isSubscribed) {
+            // User is authenticated and subscribed, return full poem
+            return res.status(200).json(poem);
           }
-        } else {
-          return res.status(200).json({
-            ...poem,
-            content: poem.content.split('\n').slice(0, 2).join('\n') + '...',
-            isPremiumLocked: true
-          });
         }
+        
+        // User either not authenticated or not subscribed
+        // Return poem with limited content for premium poems
+        return res.status(200).json({
+          ...poem,
+          content: poem.content.split('\n').slice(0, 2).join('\n') + '...',
+          isPremiumLocked: true
+        });
       }
       
       return res.status(200).json(poem);
