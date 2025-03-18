@@ -226,7 +226,7 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
 
-  async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User> {
+  async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string | null }): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) throw new Error(`User with id ${userId} not found`);
     
@@ -234,7 +234,7 @@ export class MemStorage implements IStorage {
       ...user, 
       stripeCustomerId: stripeInfo.stripeCustomerId,
       stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
-      isSubscribed: true
+      isSubscribed: stripeInfo.stripeSubscriptionId !== null
     };
     this.users.set(userId, updatedUser);
     return updatedUser;
@@ -524,13 +524,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User> {
+  async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string | null }): Promise<User> {
     try {
       const result = await this.db.update(users)
         .set({ 
           stripeCustomerId: stripeInfo.stripeCustomerId,
           stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
-          isSubscribed: true
+          isSubscribed: stripeInfo.stripeSubscriptionId !== null
         })
         .where(eq(users.id, userId))
         .returning();

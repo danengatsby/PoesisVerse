@@ -12,18 +12,13 @@ import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 
 // Load Stripe outside of component render for better performance
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  console.warn('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
-  : null;
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId: string } }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
+  const { refreshSubscription } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,10 +45,19 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
           variant: "destructive",
         });
       } else {
+        // If the payment is successful on the client side, refresh the subscription status immediately
+        // This helps in cases where the webhook hasn't processed yet
+        refreshSubscription();
+        
         toast({
           title: "Payment Successful",
           description: "You are now subscribed!",
         });
+        
+        // Redirect to home page after successful payment
+        setTimeout(() => {
+          window.location.href = '/?subscription=success';
+        }, 1500);
       }
     } catch (error: any) {
       toast({
@@ -115,7 +119,24 @@ export default function Subscribe() {
   const [showPlanModal, setShowPlanModal] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<{ type: string, price: string, priceId: string } | null>(null);
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, refreshSubscription } = useAuth();
+  
+  // Check for successful subscription return from Stripe
+  useEffect(() => {
+    // Check for subscription status in URL
+    if (window.location.search.includes('subscription=success')) {
+      toast({
+        title: "Subscription Active",
+        description: "Thank you for subscribing to PoesisVerse!",
+      });
+      
+      // Refresh subscription status
+      refreshSubscription();
+      
+      // Clear URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [toast, refreshSubscription]);
   
   const handleSelectPlan = async (planType: 'monthly' | 'annual', priceId: string) => {
     if (!isAuthenticated) {
@@ -136,10 +157,9 @@ export default function Subscribe() {
     setShowPlanModal(false);
     
     try {
-      // Create subscription
+      // Create subscription intent
       const response = await apiRequest("POST", "/api/create-subscription", {
-        priceId,
-        paymentMethodId: "pm_card_visa", // This would normally come from the Stripe.js Elements
+        priceId
       });
       
       const data = await response.json();

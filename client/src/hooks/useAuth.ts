@@ -51,6 +51,36 @@ export function useAuth() {
   
   // Extract user from auth data
   const user = authData?.user || null;
+  
+  // Check subscription status with Stripe
+  const {
+    data: subscriptionData,
+    isLoading: isLoadingSubscription,
+  } = useQuery({
+    queryKey: ["/api/subscription"],
+    queryFn: async () => {
+      try {
+        // Use fetch directly with error handling to avoid apiRequest issues
+        const res = await fetch("/api/subscription", {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (!res.ok) {
+          if (res.status === 401) {
+            return { isActive: false };
+          }
+          throw new Error("Failed to verify subscription status");
+        }
+        
+        return await res.json();
+      } catch (err) {
+        console.error("Error checking subscription status:", err);
+        return { isActive: false };
+      }
+    },
+    enabled: !!user && !!user.stripeSubscriptionId,
+  });
 
   // Login mutation
   const loginMutation = useMutation({
@@ -151,14 +181,41 @@ export function useAuth() {
     return logoutMutation.mutateAsync();
   };
 
+  // Determine actual subscription status by combining database and Stripe status
+  const isSubscribed = user?.isSubscribed === true || (subscriptionData?.isActive === true);
+  
+  // Allow subscribing if not already subscribed
+  const subscribeUser = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to subscribe",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Redirect to subscription page
+    window.location.href = "/subscribe";
+  };
+  
+  // Refresh subscription status
+  const refreshSubscription = async () => {
+    if (!user) return;
+    await queryClient.refetchQueries({ queryKey: ["/api/subscription"] });
+  };
+
   return {
     user,
     isAuthenticated: !!user,
-    isLoading,
+    isLoading: isLoading || isLoadingSubscription,
     error,
-    isSubscribed: user?.isSubscribed || false,
+    isSubscribed,
+    subscriptionDetails: subscriptionData?.subscription,
     login,
     register,
     logout,
+    subscribe: subscribeUser,
+    refreshSubscription,
   };
 }

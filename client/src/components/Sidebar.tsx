@@ -15,7 +15,7 @@ interface SidebarProps {
 
 export default function Sidebar({ onPoemSelect, selectedPoemId, isMobile, onCloseMobile }: SidebarProps) {
   const { poems, recentPoems, isLoadingPoems, isLoadingRecentPoems } = usePoems();
-  const { isAuthenticated, isSubscribed } = useAuth();
+  const { isAuthenticated, isSubscribed, subscribe } = useAuth();
   const [selectedTab, setSelectedTab] = useState("all");
 
   const handlePoemClick = (poemId: number) => {
@@ -41,9 +41,9 @@ export default function Sidebar({ onPoemSelect, selectedPoemId, isMobile, onClos
       >
         {poem.title}
         {poem.isPremium && (
-          <span className="ml-2 text-xs bg-secondary-light px-1.5 py-0.5 rounded-sm text-primary-dark">
-            <i className="fas fa-star text-[10px] mr-1"></i>
-            Premium
+          <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-sm inline-flex items-center ${isSubscribed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+            <i className={`${isSubscribed ? 'fas fa-unlock' : 'fas fa-lock'} text-[10px] mr-1`}></i>
+            {isSubscribed ? 'Premium' : 'Locked'}
           </span>
         )}
       </a>
@@ -154,9 +154,12 @@ export default function Sidebar({ onPoemSelect, selectedPoemId, isMobile, onClos
               </div>
             ) : (
               <>
-                <Link href="/subscribe" className="block w-full px-4 py-2 bg-accent text-white rounded-md shadow-sm hover:bg-accent-dark font-ui font-medium text-sm transition-colors">
+                <Button 
+                  onClick={subscribe}
+                  className="w-full px-4 py-2 bg-accent text-white rounded-md shadow-sm hover:bg-accent-dark font-ui font-medium text-sm transition-colors"
+                >
                   Subscribe Now
-                </Link>
+                </Button>
                 <p className="mt-2 text-xs text-neutral-600">Unlock all poems with premium access</p>
               </>
             )}

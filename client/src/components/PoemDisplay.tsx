@@ -12,7 +12,7 @@ interface PoemDisplayProps {
 
 export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
   const { selectedPoem, isLoadingSelectedPoem, bookmarkPoem, removeBookmark, bookmarkedPoems, setSelectedPoemId: updateSelectedPoemId } = usePoems();
-  const { isAuthenticated, isSubscribed } = useAuth();
+  const { isAuthenticated, isSubscribed, subscribe } = useAuth();
   
   // Sincronizăm ID-ul poemului selectat din proprietăți cu cel din hook
   useEffect(() => {
@@ -84,11 +84,12 @@ export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
             <i className="fas fa-lock text-3xl mb-3"></i>
             <h3 className="font-heading text-xl font-bold mb-2">Premium Content</h3>
             <p className="mb-4 max-w-md">Subscribe to PoesisVerse to unlock this and all other premium poems in our collection.</p>
-            <Link href="/subscribe">
-              <a className="px-6 py-2 bg-primary hover:bg-primary-dark transition-colors rounded-md font-ui font-medium">
-                View Subscription Plans
-              </a>
-            </Link>
+            <Button 
+              onClick={subscribe}
+              className="px-6 py-2 bg-primary hover:bg-primary-dark transition-colors rounded-md font-ui font-medium"
+            >
+              View Subscription Plans
+            </Button>
           </div>
           
           <div className="filter blur-sm">

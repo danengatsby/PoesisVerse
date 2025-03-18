@@ -1,4 +1,4 @@
-import { Route, useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
@@ -10,6 +10,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ path, component: Component }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const [matches] = useRoute(path);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -29,5 +30,6 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
     return null;
   }
 
-  return <Route path={path} component={Component} />;
+  // Only render component if the current path matches
+  return matches ? <Component /> : null;
 }

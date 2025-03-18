@@ -437,10 +437,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const user = (req as any).user;
-      const { paymentMethodId, priceId } = req.body;
+      const { priceId } = req.body;
       
-      if (!priceId || !paymentMethodId) {
-        return res.status(400).json({ message: 'Price ID and Payment Method ID are required' });
+      if (!priceId) {
+        return res.status(400).json({ message: 'Price ID is required' });
       }
       
       // Create or get Stripe customer
@@ -450,47 +450,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const customer = await stripe.customers.create({
           email: user.email,
           name: user.username,
-          payment_method: paymentMethodId,
-          invoice_settings: {
-            default_payment_method: paymentMethodId,
-          },
         });
         
         customerId = customer.id;
-      } else {
-        // Attach payment method to existing customer
-        await stripe.paymentMethods.attach(paymentMethodId, {
-          customer: customerId,
-        });
         
-        // Set as default payment method
-        await stripe.customers.update(customerId, {
-          invoice_settings: {
-            default_payment_method: paymentMethodId,
-          },
+        // Update user with customer ID
+        await storage.updateUserStripeInfo(user.id, {
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: null as unknown as string
         });
       }
       
-      // Create subscription
-      const subscription = await stripe.subscriptions.create({
+      // Create a subscription payment intent directly
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: priceId === 'price_monthly' ? 599 : 4999, // $5.99 or $49.99 in cents
+        currency: 'usd',
         customer: customerId,
-        items: [{ price: priceId }],
-        expand: ['latest_invoice.payment_intent'],
+        setup_future_usage: 'off_session',
+        metadata: {
+          priceId,
+          userId: user.id.toString()
+        }
       });
-      
-      // Update user with Stripe info
-      await storage.updateUserStripeInfo(user.id, {
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscription.id
-      });
-      
-      // Return client secret for confirmation
-      const invoice = subscription.latest_invoice as any;
-      const clientSecret = invoice?.payment_intent?.client_secret;
       
       return res.status(200).json({
-        subscriptionId: subscription.id,
-        clientSecret,
+        clientSecret: paymentIntent.client_secret,
       });
     } catch (error: any) {
       console.error('Error creating subscription:', error);
@@ -556,6 +540,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating payment intent:', error);
       return res.status(500).json({ message: 'Failed to create payment intent' });
+    }
+  });
+  
+  // Stripe webhook for handling events
+  app.post('/api/stripe-webhook', async (req, res) => {
+    if (!stripe) {
+      return res.status(500).json({ message: 'Stripe is not configured' });
+    }
+    
+    let event;
+    
+    try {
+      // Verify the event came from Stripe
+      const signature = req.headers['stripe-signature'] as string;
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      
+      if (!webhookSecret) {
+        // For development, we'll process the event without verification
+        event = req.body;
+        console.log('⚠️ Webhook secret not configured, skipping signature verification');
+      } else {
+        // In production, verify the signature
+        event = stripe.webhooks.constructEvent(
+          (req as any).rawBody || JSON.stringify(req.body),
+          signature,
+          webhookSecret
+        );
+      }
+      
+      // Handle the event
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          const paymentIntent = event.data.object;
+          console.log(`PaymentIntent succeeded: ${paymentIntent.id}`);
+          
+          // If this payment was for a subscription, create the subscription
+          if (paymentIntent.metadata && paymentIntent.metadata.userId && paymentIntent.metadata.priceId) {
+            const { userId, priceId } = paymentIntent.metadata;
+            
+            // Get the user
+            const user = await storage.getUser(parseInt(userId));
+            
+            if (!user) {
+              console.error(`User ${userId} not found for subscription creation`);
+              break;
+            }
+            
+            // Verify customer ID exists
+            if (!user.stripeCustomerId) {
+              console.error(`User ${userId} has no Stripe customer ID`);
+              break;
+            }
+            
+            // Create a subscription with Stripe
+            const subscription = await stripe.subscriptions.create({
+              customer: user.stripeCustomerId,
+              items: [{ price: priceId }],
+            });
+            
+            // Update user with subscription ID
+            await storage.updateUserStripeInfo(user.id, {
+              stripeCustomerId: user.stripeCustomerId,
+              stripeSubscriptionId: subscription.id
+            });
+            
+            console.log(`Subscription created: ${subscription.id} for user ${userId}`);
+          }
+          break;
+          
+        case 'customer.subscription.updated':
+        case 'customer.subscription.deleted':
+          const subscription = event.data.object;
+          console.log(`Subscription ${event.type}: ${subscription.id}`);
+          
+          // Get user by stripeCustomerId
+          const users = await storage.getAllUsers();
+          const user = Array.from(users.values()).find(u => u.stripeCustomerId === subscription.customer);
+          
+          if (user) {
+            // Update subscription status
+            const isActive = subscription.status === 'active' || subscription.status === 'trialing';
+            await storage.updateUserSubscription(user.id, isActive);
+            console.log(`Updated subscription status for user ${user.id}: ${isActive}`);
+          }
+          break;
+          
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+      
+      // Return a response to acknowledge receipt of the event
+      res.json({ received: true });
+    } catch (err: any) {
+      console.error(`Webhook Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
     }
   });
 
