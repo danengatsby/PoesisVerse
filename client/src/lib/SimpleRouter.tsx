@@ -1,62 +1,75 @@
-import { createContext, useContext, useState, useEffect, ReactNode, MouseEvent } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+// Define a simple router context
 interface RouterContextType {
-  currentPath: string;
-  navigateTo: (path: string) => void;
+  path: string;
+  navigate: (to: string) => void;
 }
 
+// Create the context with default values
 const RouterContext = createContext<RouterContextType>({
-  currentPath: '/',
-  navigateTo: () => {},
+  path: window.location.pathname,
+  navigate: () => {},
 });
 
+// Custom hook for accessing the router
 export function useRouter() {
   return useContext(RouterContext);
 }
 
+// Props for the router provider component
 interface RouterProviderProps {
   children: ReactNode;
 }
 
+// Router provider component that manages navigation state
 export function RouterProvider({ children }: RouterProviderProps) {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [path, setPath] = useState(window.location.pathname);
 
+  // Handle browser history navigation
   useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
+    const handleLocationChange = () => {
+      setPath(window.location.pathname);
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
-  const navigateTo = (path: string) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
+  // Navigation function
+  const navigate = (to: string) => {
+    window.history.pushState({}, '', to);
+    setPath(to);
   };
 
+  // Provide routing context to children
   return (
-    <RouterContext.Provider value={{ currentPath, navigateTo }}>
+    <RouterContext.Provider value={{ path, navigate }}>
       {children}
     </RouterContext.Provider>
   );
 }
 
+// Props for Route component
 interface RouteProps {
   path: string;
   component: React.ComponentType;
 }
 
+// Route component for rendering based on current path
 export function Route({ path, component: Component }: RouteProps) {
-  const { currentPath } = useRouter();
+  const { path: currentPath } = useRouter();
   
   // Special case for wildcard route (404 page)
-  if (path === '*' && currentPath !== '/' && currentPath !== '/auth' && 
-      currentPath !== '/subscribe' && currentPath !== '/add-poem') {
-    return <Component />;
+  if (path === '*') {
+    const definedRoutes = ['/', '/auth', '/subscribe', '/add-poem'];
+    if (!definedRoutes.includes(currentPath)) {
+      return <Component />;
+    }
+    return null;
   }
   
-  // Simple path matching
+  // Simple path matching - exact match only for now
   if (currentPath === path) {
     return <Component />;
   }
@@ -64,19 +77,21 @@ export function Route({ path, component: Component }: RouteProps) {
   return null;
 }
 
+// Props for Link component
 interface LinkProps {
   href: string;
   children: ReactNode;
   className?: string;
-  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
+// Link component for navigation
 export function Link({ href, children, className, onClick }: LinkProps) {
-  const { navigateTo } = useRouter();
+  const { navigate } = useRouter();
   
-  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    navigateTo(href);
+    navigate(href);
     if (onClick) onClick(e);
   };
   

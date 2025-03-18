@@ -5,16 +5,16 @@ import LoginModal from "@/components/auth/LoginModal";
 import SignupModal from "@/components/auth/SignupModal";
 
 export default function AuthPage() {
-  const { navigateTo } = useRouter();
+  const { navigate } = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(true);
 
   // Redirect to home if already authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      navigateTo("/");
+      navigate("/");
     }
-  }, [isAuthenticated, isLoading, navigateTo]);
+  }, [isAuthenticated, isLoading, navigate]);
 
   if (isLoading) {
     return (

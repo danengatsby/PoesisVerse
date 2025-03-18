@@ -53,7 +53,7 @@ export default function AddPoem() {
   const { isAuthenticated } = useAuth();
   const { refetchPoems } = usePoems(); // Adăugăm refetchPoems pentru a reîmprospăta lista
   const [isPending, setIsPending] = useState(false);
-  const { navigateTo } = useRouter();
+  const { navigate } = useRouter();
   const { toast } = useToast();
   
   // State pentru fișierele încărcate și preview-uri
@@ -191,7 +191,7 @@ export default function AddPoem() {
           title: "Poem adăugat",
           description: "Poemul a fost adăugat cu succes!",
         });
-        navigateTo("/");
+        navigate("/");
       } else {
         const error = await response.json();
         throw new Error(error.message || "A apărut o eroare la adăugarea poemului");
@@ -430,7 +430,7 @@ export default function AddPoem() {
           />
 
           <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigateTo("/")}>
+            <Button variant="outline" type="button" onClick={() => navigate("/")}>
               Anulare
             </Button>
             <Button type="submit" disabled={isPending}>

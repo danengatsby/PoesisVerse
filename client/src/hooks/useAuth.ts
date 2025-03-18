@@ -195,9 +195,8 @@ export function useAuth() {
       return;
     }
     
-    // Redirect to subscription page using router (handled by component)
-    window.history.pushState({}, '', '/subscribe');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    // Redirect to subscription page using window.location - simple approach
+    window.location.href = '/subscribe';
   };
   
   // Refresh subscription status

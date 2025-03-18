@@ -8,14 +8,14 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ path, component: Component }: ProtectedRouteProps) {
-  const { currentPath, navigateTo } = useRouter();
+  const { path: currentPath, navigate } = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && currentPath === path) {
-      navigateTo('/auth');
+      navigate('/auth');
     }
-  }, [isLoading, isAuthenticated, navigateTo, currentPath, path]);
+  }, [isLoading, isAuthenticated, navigate, currentPath, path]);
 
   // Only render if this is the current path
   if (currentPath !== path) {
