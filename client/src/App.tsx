@@ -210,9 +210,11 @@ const Router = () => {
       <Route path="/edit-poem/:id">
         {(params) => {
           console.log("Edit poem route params:", params);
+          // Asigurăm-ne că params.id este un string valid pentru a evita erori TypeScript
+          const safeParams = { id: params?.id ? String(params.id) : "" };
           return (
             <ProtectedRoute path="/edit-poem/:id">
-              <AddPoem match={{ params }} />
+              <AddPoem match={{ params: safeParams }} />
             </ProtectedRoute>
           );
         }}

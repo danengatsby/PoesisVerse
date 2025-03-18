@@ -63,20 +63,29 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [audioName, setAudioName] = useState<string | null>(null);
   
-  // Verificăm dacă suntem în modul de editare
-  const poemId = match?.params?.id ? parseInt(match.params.id) : null;
-  const isEditMode = !!poemId;
+  // Debugging la început
+  console.log("AddPoem: Match recepționat:", JSON.stringify(match), "Path:", window.location.pathname);
+  
+  // Extragem id-ul din URL dacă params este undefined sau null
+  const urlId = window.location.pathname.split('/').pop();
+  
+  // Verificăm dacă suntem în modul de editare - folosim cu prioritate id-ul din URL
+  const poemId = urlId ? parseInt(urlId) : (match?.params?.id ? parseInt(match.params.id) : null);
+  const isEditMode = !!poemId && !isNaN(poemId);
   const [isLoading, setIsLoading] = useState(isEditMode);
   
-  console.log("AddPoem: Mode =", isEditMode ? "EDIT" : "ADD", "ID =", poemId, "Match:", JSON.stringify(match), "Path:", window.location.pathname);
+  console.log("AddPoem: Mode =", isEditMode ? "EDIT" : "ADD", "ID =", poemId, 
+              "URL ID =", urlId,
+              "Match Params:", JSON.stringify(match?.params));
   
   // Debugging suplimentar
   useEffect(() => {
     console.log("AddPoem component rendered with params:", 
                 JSON.stringify(match?.params), 
-                "ID:", poemId, 
+                "URL ID:", urlId,
+                "Final ID:", poemId, 
                 "Edit mode:", isEditMode);
-  }, [match, poemId, isEditMode]);
+  }, [match, poemId, isEditMode, urlId]);
 
   // Funcție pentru redimensionarea imaginilor înainte de încărcare
   const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
