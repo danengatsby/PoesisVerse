@@ -61,6 +61,11 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [audioName, setAudioName] = useState<string | null>(null);
+  
+  // Verificăm dacă suntem în modul de editare
+  const poemId = match?.params?.id ? parseInt(match.params.id) : null;
+  const isEditMode = !!poemId;
+  const [isLoading, setIsLoading] = useState(isEditMode);
 
   // Funcție pentru redimensionarea imaginilor înainte de încărcare
   const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
@@ -164,6 +169,63 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
     }
   };
   
+  // Încărcăm datele poemului în caz că suntem în modul de editare
+  useEffect(() => {
+    if (isEditMode && poemId) {
+      const fetchPoemData = async () => {
+        try {
+          setIsLoading(true);
+          const response = await apiRequest("GET", `/api/poems/${poemId}`);
+          
+          if (response.ok) {
+            const poemData = await response.json();
+            
+            // Populăm formularul cu datele poemului
+            form.reset({
+              title: poemData.title,
+              content: poemData.content,
+              author: poemData.author,
+              description: poemData.description || "",
+              year: poemData.year || "",
+              category: poemData.category || "",
+              isPremium: poemData.isPremium,
+              imageUrl: poemData.imageUrl || "",
+              audioUrl: poemData.audioUrl || "",
+            });
+            
+            // Setăm preview-urile dacă există
+            if (poemData.imageUrl) {
+              setImagePreview(poemData.imageUrl);
+            }
+            
+            if (poemData.audioUrl) {
+              setAudioName("Fisier audio existent");
+            }
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Eroare",
+              description: "Nu s-a putut încărca poemul pentru editare.",
+            });
+            setLocation("/");
+          }
+        } catch (error) {
+          console.error("Eroare la încărcarea poemului:", error);
+          toast({
+            variant: "destructive",
+            title: "Eroare",
+            description: "Nu s-a putut încărca poemul pentru editare.",
+          });
+          setLocation("/");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchPoemData();
+    }
+  }, [isEditMode, poemId, form, toast, setLocation]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {

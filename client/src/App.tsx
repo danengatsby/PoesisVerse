@@ -203,6 +203,12 @@ const Router = () => {
         </WithMatch>
       </ProtectedRoute>
       
+      <ProtectedRoute path="/edit-poem/:id">
+        <WithMatch>
+          <AddPoem />
+        </WithMatch>
+      </ProtectedRoute>
+      
       <ProtectedRoute path="/subscribers">
         <WithMatch>
           <Subscribers />
