@@ -33,5 +33,38 @@
 <body class="font-body text-neutral-800 min-h-screen">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+  
+  <!-- Disable HMR overlay during development -->
+  <script>
+    // This script disables the HMR overlay without changing vite.config.js
+    window.addEventListener('load', function() {
+      // Give it a moment to ensure Vite has initialized
+      setTimeout(() => {
+        const existingOverlay = document.querySelector('vite-error-overlay');
+        if (existingOverlay) {
+          existingOverlay.remove();
+          console.log('Removed existing error overlay');
+        }
+        
+        // Create an observer to remove future error overlays
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+              for (let i = 0; i < mutation.addedNodes.length; i++) {
+                const node = mutation.addedNodes[i];
+                if (node.tagName && node.tagName.toLowerCase() === 'vite-error-overlay') {
+                  node.remove();
+                  console.log('Removed dynamically added error overlay');
+                }
+              }
+            }
+          });
+        });
+        
+        // Start observing the body for error overlays
+        observer.observe(document.body, { childList: true });
+      }, 100);
+    });
+  </script>
 </body>
 </html>
