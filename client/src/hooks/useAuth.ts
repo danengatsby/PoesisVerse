@@ -182,7 +182,9 @@ export function useAuth() {
   };
 
   // Determine actual subscription status by combining database and Stripe status
-  const isSubscribed = user?.isSubscribed === true || (subscriptionData?.isActive === true);
+  // Force to check isSubscribed from user object directly for more reliability
+  // This ensures that the subscription status is definitely read from the database record
+  const isSubscribed = user?.isSubscribed === true;
   
   // Allow subscribing if not already subscribed
   const subscribeUser = async () => {
@@ -201,10 +203,25 @@ export function useAuth() {
     window.dispatchEvent(event);
   };
   
-  // Refresh subscription status
+  // Refresh subscription status - force reload all data
   const refreshSubscription = async () => {
     if (!user) return;
-    await queryClient.refetchQueries({ queryKey: ["/api/subscription"] });
+    
+    console.log("Refreshing authentication and subscription data...");
+    
+    // Reîncarcă toate datele de autentificare și abonament
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/check"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/users/profile"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] })
+    ]);
+    
+    // Forțăm reîncărcarea completă a datelor pentru a actualiza statusul utilizatorului
+    await queryClient.refetchQueries({ queryKey: ["/api/auth/check"] });
+    
+    // Verificăm starea după reîncărcare
+    const authData = queryClient.getQueryData(["/api/auth/check"]);
+    console.log("Auth state after refresh:", authData);
   };
 
   return {
