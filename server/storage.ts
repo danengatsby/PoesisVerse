@@ -44,7 +44,8 @@ export class MemStorage implements IStorage {
       id: this.userIdCounter++,
       username: "test",
       email: "test@example.com",
-      password: "123456", // Aceasta ar trebui să fie criptată în producție
+      // Parola criptată pentru "123456" folosind bcrypt
+      password: "$2a$10$9Xn39AyVI7wPGUGc5RIAQuTKDVzLDOJMXR4kHP1jQUFJbmvfkM/nG",
       isSubscribed: false,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
@@ -57,7 +58,8 @@ export class MemStorage implements IStorage {
       id: this.userIdCounter++,
       username: "poet",
       email: "danen53@gmail.com",
-      password: "123456", // Aceasta ar trebui să fie criptată în producție
+      // Parola criptată pentru "123456" folosind bcrypt
+      password: "$2a$10$9Xn39AyVI7wPGUGc5RIAQuTKDVzLDOJMXR4kHP1jQUFJbmvfkM/nG",
       isSubscribed: false,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
