@@ -60,30 +60,88 @@ export default function AddPoem() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
+  // Funcție pentru redimensionarea imaginilor înainte de încărcare
+  const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculăm noile dimensiuni păstrând raportul de aspect
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+          }
+          
+          // Creăm un canvas pentru redimensionare
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Desenăm imaginea redimensionată
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Nu s-a putut obține contextul canvas'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convertim canvas-ul în URL base64 cu compresie
+          const quality = 0.7; // Ajustează calitatea pentru a reduce dimensiunea
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+        img.onerror = () => {
+          reject(new Error('Eroare la încărcarea imaginii'));
+        };
+        if (event.target?.result) {
+          img.src = event.target.result as string;
+        }
+      };
+      reader.onerror = () => {
+        reject(new Error('Eroare la citirea fișierului'));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Funcție pentru gestionarea încărcării imagini
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'thumbnail') => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'thumbnail') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
     const file = files[0];
-    const reader = new FileReader();
     
-    reader.onloadend = () => {
-      const result = reader.result as string;
+    try {
+      // Redimensionăm imaginea (dimensiuni diferite pentru imagine și thumbnail)
+      const maxWidth = type === 'image' ? 1200 : 300;
+      const maxHeight = type === 'image' ? 1200 : 300;
+      
+      const resizedImageUrl = await resizeImage(file, maxWidth, maxHeight);
       
       if (type === 'image') {
         setImageFile(file);
-        setImagePreview(result);
+        setImagePreview(resizedImageUrl);
         // Actualizăm formularul cu baza64 pentru a putea fi trimis la server
-        form.setValue('imageUrl', result);
+        form.setValue('imageUrl', resizedImageUrl);
       } else {
         setThumbnailFile(file);
-        setThumbnailPreview(result);
-        form.setValue('thumbnailUrl', result);
+        setThumbnailPreview(resizedImageUrl);
+        form.setValue('thumbnailUrl', resizedImageUrl);
       }
-    };
-    
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Eroare la redimensionarea imaginii:', error);
+      toast({
+        variant: "destructive",
+        title: "Eroare",
+        description: "Nu s-a putut procesa imaginea. Încercați altă imagine.",
+      });
+    }
   };
   
   const form = useForm<FormValues>({
