@@ -122,6 +122,16 @@ export default function Header() {
                     </Button>
                   )}
                   
+                  <Button 
+                    variant="outline" 
+                    className="mr-2 text-blue-500 border-blue-500 hover:bg-blue-50" 
+                    onClick={testEmail}
+                    disabled={isTestingEmail}
+                  >
+                    <MailIcon className="h-4 w-4 mr-1" />
+                    {isTestingEmail ? 'Se trimite...' : 'Test email'}
+                  </Button>
+                  
                   <Button variant="ghost" onClick={handleLogout}>
                     <LogOutIcon className="h-4 w-4 mr-1" />
                     Deconectare
@@ -190,6 +200,15 @@ export default function Header() {
                       Abonare
                     </button>
                   )}
+                  
+                  <button 
+                    className="w-full text-left px-4 py-2 rounded-md text-blue-500 hover:bg-blue-50 transition flex items-center"
+                    onClick={testEmail}
+                    disabled={isTestingEmail}
+                  >
+                    <MailIcon className="h-4 w-4 mr-2" />
+                    {isTestingEmail ? 'Se trimite...' : 'Test email'}
+                  </button>
                   
                   <button 
                     className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center"

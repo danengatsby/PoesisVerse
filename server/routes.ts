@@ -470,7 +470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: true, 
           message: 'Email test trimis cu succes'
         });
-      } catch (emailError) {
+      } catch (emailError: any) {
         console.error('Error sending test email:', emailError);
         return res.status(500).json({ 
           success: false, 
@@ -478,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: emailError.message || 'Unknown error' 
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in test email endpoint:', error);
       return res.status(500).json({ 
         success: false, 
@@ -739,7 +739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Trimite email de confirmare a abonamentului
             try {
               await sendSubscriptionEmail(user);
-            } catch (emailError) {
+            } catch (emailError: any) {
               console.error('Failed to send subscription confirmation email:', emailError);
             }
           }
