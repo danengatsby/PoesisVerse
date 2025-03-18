@@ -244,9 +244,7 @@ export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
                 </div>
                 
                 <div className="flex space-x-2">
-                  {selectedPoem.audioUrl && 
-                   !selectedPoem.audioUrl.includes('unsplash') && 
-                   !selectedPoem.audioUrl.includes('image') && (
+                  {selectedPoem.audioUrl && (
                     <div className="mr-4">
                       <audio 
                         controls 
