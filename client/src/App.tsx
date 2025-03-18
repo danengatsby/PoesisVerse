@@ -195,6 +195,12 @@ const Router = () => {
         </WithMatch>
       </ProtectedRoute>
       
+      <ProtectedRoute path="/subscribers">
+        <WithMatch>
+          <Subscribers />
+        </WithMatch>
+      </ProtectedRoute>
+      
       <Route path="/:rest*">
         <WithMatch>
           <NotFound />

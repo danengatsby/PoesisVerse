@@ -604,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate subscription info if the user is subscribed
       let subscriptionInfo = null;
-      if (user.is_subscribed && user.subscribed_at && user.subscription_end_date) {
+      if (user.isSubscribed && user.subscribedAt && user.subscriptionEndDate) {
         const now = new Date();
         const endDate = new Date(user.subscription_end_date);
         
@@ -647,16 +647,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allUsers = await storage.getAllUsers();
       // Conversia Map în Array și filtrează doar utilizatorii abonați
       const subscribers = Array.from(allUsers.values())
-        .filter(user => user.is_subscribed)
+        .filter(user => user.isSubscribed)
         .map(user => ({
           id: user.id,
           username: user.username,
           email: user.email,
-          subscriptionType: user.subscription_end_date && user.subscribed_at ? 
-            (new Date(user.subscription_end_date).getTime() - new Date(user.subscribed_at).getTime() > 31 * 24 * 60 * 60 * 1000 ? 
+          subscriptionType: user.subscriptionEndDate && user.subscribedAt ? 
+            (new Date(user.subscriptionEndDate).getTime() - new Date(user.subscribedAt).getTime() > 31 * 24 * 60 * 60 * 1000 ? 
               'anual' : 'lunar') : 'nedeterminat',
-          subscribedAt: user.subscribed_at,
-          subscriptionEndDate: user.subscription_end_date
+          subscribedAt: user.subscribedAt,
+          subscriptionEndDate: user.subscriptionEndDate
         }));
       
       return res.status(200).json(subscribers);
@@ -773,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const amount = planType === 'monthly' ? 599 : 4999; // $5.99 or $49.99
       
       // Create or get Stripe customer
-      let customerId = user.stripe_customer_id;
+      let customerId = user.stripeCustomerId;
       
       if (!customerId) {
         const customer = await stripe.customers.create({
@@ -846,15 +846,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       
-      if (!user.stripe_subscription_id) {
+      if (!user.stripeSubscriptionId) {
         return res.status(200).json({ isActive: false });
       }
       
-      const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
       const isActive = subscription.status === 'active' || subscription.status === 'trialing';
       
       // Update user subscription status if needed
-      if (isActive !== user.is_subscribed) {
+      if (isActive !== user.isSubscribed) {
         await storage.updateUserSubscription(user.id, isActive);
       }
       
@@ -978,7 +978,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
-          isSubscribed: updatedUser.is_subscribed
+          isSubscribed: updatedUser.isSubscribed
         } 
       });
     } catch (error: any) {
@@ -1138,7 +1138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Get user by stripeCustomerId
           const users = await storage.getAllUsers();
-          const user = Array.from(users.values()).find(u => u.stripe_customer_id === subscription.customer);
+          const user = Array.from(users.values()).find(u => u.stripeCustomerId === subscription.customer);
           
           if (user) {
             // Update subscription status
