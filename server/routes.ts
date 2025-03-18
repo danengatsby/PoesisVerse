@@ -816,7 +816,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/mark-subscription-success", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      const { planType = 'monthly' } = req.body; // Get plan type from request body
+      const { 
+        planType = 'monthly',
+        paymentIntentId,
+        card = {} 
+      } = req.body; // Get data from request body
       
       // Validate planType
       if (planType !== 'monthly' && planType !== 'annual') {
@@ -829,10 +833,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user subscription status
       const updatedUser = await storage.updateUserSubscription(user.id, true);
       
-      // Send email confirmation with plan type
+      // Pregătim detaliile facturii
+      const invoiceDetails: {
+        invoiceId: string;
+        paymentDate: string;
+        paymentMethod: string;
+        cardLast4?: string;
+      } = {
+        invoiceId: `INV-${Date.now().toString().slice(-8)}`,
+        paymentDate: new Date().toLocaleDateString(),
+        paymentMethod: 'Card'
+      };
+      
+      // Adăugăm detaliile cardului dacă sunt disponibile
+      if (card && card.last4) {
+        invoiceDetails.cardLast4 = card.last4;
+      }
+      
+      // Dacă avem un paymentIntentId, încercăm să obținem mai multe detalii de la Stripe
+      if (paymentIntentId && stripe) {
+        try {
+          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+          
+          if (paymentIntent.latest_charge) {
+            const charge = await stripe.charges.retrieve(paymentIntent.latest_charge as string);
+            
+            // Actualizăm detaliile facturii cu informații de la Stripe
+            if (charge.payment_method_details?.card) {
+              invoiceDetails.cardLast4 = charge.payment_method_details.card.last4;
+            }
+            
+            if (charge.receipt_number) {
+              invoiceDetails.invoiceId = charge.receipt_number;
+            }
+            
+            if (charge.created) {
+              invoiceDetails.paymentDate = new Date(charge.created * 1000).toLocaleDateString();
+            }
+          }
+        } catch (stripeError) {
+          console.error('Error retrieving payment details from Stripe:', stripeError);
+          // Continuăm cu datele pe care le avem disponibile
+        }
+      }
+      
+      // Send email confirmation with plan type and invoice details
       try {
-        await sendSubscriptionEmail(updatedUser, planType);
-        console.log(`${planType} subscription confirmation email sent successfully for:`, updatedUser.email);
+        await sendSubscriptionEmail(updatedUser, planType, invoiceDetails);
+        console.log(`${planType} subscription confirmation email with invoice sent successfully for:`, updatedUser.email);
       } catch (emailError: any) {
         console.error('Error sending subscription confirmation email:', emailError);
         // Don't return an error, continue with subscription success
@@ -938,9 +986,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             console.log(`User ${userId} ${subscriptionType} subscription activated through direct payment`);
             
-            // Trimite email de confirmare a abonamentului cu tipul corect
+            // Pregătim detaliile facturii
+            const invoiceDetails: {
+              invoiceId: string;
+              paymentDate: string;
+              paymentMethod: string;
+              cardLast4?: string;
+            } = {
+              invoiceId: `INV-${Date.now().toString().slice(-8)}`,
+              paymentDate: new Date().toLocaleDateString(),
+              paymentMethod: 'Card'
+            };
+            
+            // Încercăm să obținem detalii despre tranzacție
+            if (paymentIntent.latest_charge) {
+              try {
+                const charge = await stripe.charges.retrieve(paymentIntent.latest_charge as string);
+                
+                // Actualizăm detaliile facturii cu informații de la Stripe
+                if (charge.payment_method_details?.card) {
+                  invoiceDetails.cardLast4 = charge.payment_method_details.card.last4 || undefined;
+                }
+                
+                if (charge.receipt_number) {
+                  invoiceDetails.invoiceId = charge.receipt_number;
+                }
+                
+                if (charge.created) {
+                  invoiceDetails.paymentDate = new Date(charge.created * 1000).toLocaleDateString();
+                }
+              } catch (stripeError) {
+                console.error('Error retrieving payment details from Stripe:', stripeError);
+              }
+            }
+            
+            // Trimite email de confirmare a abonamentului cu tipul corect și factura
             try {
-              await sendSubscriptionEmail(user, subscriptionType);
+              await sendSubscriptionEmail(user, subscriptionType, invoiceDetails);
+              console.log(`${subscriptionType} subscription confirmation email with invoice sent via webhook for:`, user.email);
             } catch (emailError: any) {
               console.error(`Failed to send ${subscriptionType} subscription confirmation email:`, emailError);
             }

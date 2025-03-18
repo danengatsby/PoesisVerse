@@ -63,14 +63,30 @@ function CheckoutForm({
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
       // Payment success
       try {
-        // Mark the subscription as successful and trigger the email with plan type
+        // Obține informații despre card dacă sunt disponibile
+        let cardDetails = {};
+        if (paymentIntent.payment_method) {
+          try {
+            // Trimitem doar payment_method ID-ul către backend
+            // Backend-ul va folosi Stripe API pentru a obține detalii despre card
+            cardDetails = {
+              paymentMethodId: paymentIntent.payment_method
+            };
+          } catch (cardError) {
+            console.error('Could not retrieve payment method details:', cardError);
+          }
+        }
+        
+        // Mark the subscription as successful and trigger the email with plan type and payment details
         const response = await fetch('/api/mark-subscription-success', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            planType: plan.type // Send the plan type (monthly or annual)
+            planType: plan.type, // Send the plan type (monthly or annual)
+            paymentIntentId: paymentIntent.id, // Send the payment intent ID for receipt details
+            card: cardDetails // Send card info if available
           }),
           credentials: 'include'
         });
