@@ -6,12 +6,10 @@ import { Badge } from "@/components/ui/badge";
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectPlan: (planType: 'monthly' | 'annual', priceId: string) => void;
+  onSelectPlan: (planType: 'monthly' | 'annual') => void;
 }
 
 export default function SubscriptionModal({ isOpen, onClose, onSelectPlan }: SubscriptionModalProps) {
-  const monthlyPriceId = import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || "price_monthly";
-  const annualPriceId = import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID || "price_annual";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -49,7 +47,7 @@ export default function SubscriptionModal({ isOpen, onClose, onSelectPlan }: Sub
               </ul>
               <Button 
                 className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
-                onClick={() => onSelectPlan('monthly', monthlyPriceId)}
+                onClick={() => onSelectPlan('monthly')}
               >
                 Subscribe Monthly
               </Button>
@@ -94,7 +92,7 @@ export default function SubscriptionModal({ isOpen, onClose, onSelectPlan }: Sub
               </ul>
               <Button 
                 className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
-                onClick={() => onSelectPlan('annual', annualPriceId)}
+                onClick={() => onSelectPlan('annual')}
               >
                 Subscribe Annually
               </Button>

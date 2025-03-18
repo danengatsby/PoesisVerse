@@ -8,7 +8,7 @@ import { loadStripe } from "@stripe/stripe-js";
 
 interface StripePaymentFormProps {
   clientSecret: string;
-  plan: { type: string; price: string; priceId: string };
+  plan: { type: string; price: string; priceId: string }; // Keeping priceId for backward compatibility but we don't use it
   stripePromise: ReturnType<typeof loadStripe>;
   refreshSubscription: () => void;
   onCancel: () => void;

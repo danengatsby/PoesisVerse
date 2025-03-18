@@ -51,7 +51,7 @@ export default function Subscribe() {
     }
   }, [toast, refreshSubscription, location, setLocation]);
   
-  const handleSelectPlan = async (planType: 'monthly' | 'annual', priceId: string) => {
+  const handleSelectPlan = async (planType: 'monthly' | 'annual') => {
     if (!isAuthenticated) {
       toast({
         title: "Authentication Required",
@@ -64,7 +64,7 @@ export default function Subscribe() {
     setSelectedPlan({
       type: planType === 'monthly' ? 'Monthly' : 'Annual',
       price: planType === 'monthly' ? '$5.99/month' : '$49.99/year',
-      priceId
+      priceId: planType
     });
     
     setShowPlanModal(false);
@@ -72,7 +72,7 @@ export default function Subscribe() {
     try {
       // Create subscription intent
       const response = await apiRequest("POST", "/api/create-subscription", {
-        priceId
+        planType
       });
       
       const data = await response.json();
@@ -90,10 +90,6 @@ export default function Subscribe() {
       });
     }
   };
-  
-  // Default price IDs in case env vars are not set
-  const monthlyPriceId = import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || "price_monthly";
-  const annualPriceId = import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID || "price_annual";
   
   if (isLoading) {
     return (
@@ -182,7 +178,7 @@ export default function Subscribe() {
                         </ul>
                         <Button 
                           className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
-                          onClick={() => handleSelectPlan('monthly', monthlyPriceId)}
+                          onClick={() => handleSelectPlan('monthly')}
                         >
                           Subscribe Monthly
                         </Button>
@@ -227,7 +223,7 @@ export default function Subscribe() {
                         </ul>
                         <Button 
                           className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
-                          onClick={() => handleSelectPlan('annual', annualPriceId)}
+                          onClick={() => handleSelectPlan('annual')}
                         >
                           Subscribe Annually
                         </Button>
