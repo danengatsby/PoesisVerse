@@ -32,9 +32,11 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
     setIsSubmitting(true);
     
     try {
+      // We need to keep window.location.origin here as it's needed for Stripe redirect
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
+          // Can't use router directly in redirect URL for Stripe
           return_url: `${window.location.origin}/?subscription=success`,
         },
       });
@@ -57,7 +59,7 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
         
         // Redirect to home page after successful payment
         setTimeout(() => {
-          window.location.href = '/?subscription=success';
+          router.navigate('/?subscription=success');
         }, 1500);
       }
     } catch (error: any) {
@@ -121,11 +123,13 @@ export default function Subscribe() {
   const [selectedPlan, setSelectedPlan] = useState<{ type: string, price: string, priceId: string } | null>(null);
   const { toast } = useToast();
   const { isAuthenticated, isLoading, refreshSubscription } = useAuth();
+  const router = useRouter();
   
   // Check for successful subscription return from Stripe
   useEffect(() => {
     // Check for subscription status in URL
-    if (window.location.search.includes('subscription=success')) {
+    const currentPath = router.path;
+    if (currentPath.includes('subscription=success')) {
       toast({
         title: "Subscription Active",
         description: "Thank you for subscribing to PoesisVerse!",
@@ -134,10 +138,10 @@ export default function Subscribe() {
       // Refresh subscription status
       refreshSubscription();
       
-      // Clear URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Clear URL parameter by navigating to the base path without the query
+      router.navigate(router.path.split('?')[0]);
     }
-  }, [toast, refreshSubscription]);
+  }, [toast, refreshSubscription, router]);
   
   const handleSelectPlan = async (planType: 'monthly' | 'annual', priceId: string) => {
     if (!isAuthenticated) {
