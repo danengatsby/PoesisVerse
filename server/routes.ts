@@ -8,6 +8,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import nodemailer from "nodemailer";
 import { User } from "@shared/schema";
+import { massAddPoemsHandler } from "./massAdd";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('Missing STRIPE_SECRET_KEY environment variable. Stripe functionality will not work.');
@@ -1007,6 +1008,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Test email endpoint (requires authentication)
+  // Adăugare endpoint pentru încărcarea în masă a poemelor
+  app.post("/api/mass-add-poems", isAuthenticated, massAddPoemsHandler);
+
   app.post("/api/test-email", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;

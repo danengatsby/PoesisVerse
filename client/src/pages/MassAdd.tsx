@@ -239,9 +239,23 @@ export default function MassAdd() {
     });
   };
 
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Redirect dacă utilizatorul nu este autentificat
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return null; // Componenta este wrapped cu ProtectedRoute în App.tsx, deci nu avem nevoie să facem redirect aici
+  }
+
   return (
-    <ProtectedRoute>
-      <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8">
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle className="text-2xl font-bold">Adăugare în masă a poemelor</CardTitle>
@@ -546,6 +560,5 @@ export default function MassAdd() {
           </CardContent>
         </Card>
       </div>
-    </ProtectedRoute>
   );
 }
