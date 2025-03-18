@@ -34,6 +34,19 @@ export function usePoems() {
     },
     staleTime: 30000, // Consideră datele valabile timp de 30 secunde pentru a reduce numărul de cereri
   });
+  
+  // Fetch recently added poems
+  const { data: recentPoems, isLoading: isLoadingRecentPoems, refetch: refetchRecentPoems } = useQuery({
+    queryKey: ["/api/recent-poems"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/recent-poems");
+      if (!response.ok) {
+        throw new Error("Failed to fetch recent poems");
+      }
+      return response.json() as Promise<Poem[]>;
+    },
+    staleTime: 30000,
+  });
 
   // Fetch a specific poem
   const { data: selectedPoem, isLoading: isLoadingSelectedPoem } = useQuery({
@@ -111,11 +124,13 @@ export function usePoems() {
 
   return {
     poems,
+    recentPoems,
     selectedPoem,
     selectedPoemId,
     relatedPoems,
     bookmarkedPoems,
     isLoadingPoems,
+    isLoadingRecentPoems,
     isLoadingSelectedPoem,
     isLoadingRelatedPoems,
     isLoadingBookmarks,
@@ -123,5 +138,6 @@ export function usePoems() {
     bookmarkPoem,
     removeBookmark,
     refetchPoems,
+    refetchRecentPoems,
   };
 }
