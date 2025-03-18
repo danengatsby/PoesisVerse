@@ -4,6 +4,7 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Map<number, User>; // Adăugat pentru debug
   createUser(user: InsertUser): Promise<User>;
   updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User>;
   updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
@@ -177,6 +178,10 @@ export class MemStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.email === email);
+  }
+  
+  getAllUsers(): Map<number, User> {
+    return this.users;
   }
 
   async createUser(user: InsertUser): Promise<User> {

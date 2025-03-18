@@ -59,6 +59,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
   
+  // Endpoint de debugging pentru a verifica utilizatorii din sistem
+  app.get("/api/debug/users", async (_req, res) => {
+    try {
+      const users = Array.from(storage.getAllUsers().values()).map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        passwordHash: user.password ? user.password.substring(0, 10) + "..." : null
+      }));
+      return res.status(200).json(users);
+    } catch (error) {
+      console.error('Error fetching debug users:', error);
+      return res.status(500).json({ message: 'Failed to fetch debug users' });
+    }
+  });
+
   // Get all poems
   app.get("/api/poems", async (_req, res) => {
     try {
@@ -270,15 +286,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
       
+      // Debug info pentru a vedea ce se întâmplă cu parolele
+      console.log('Login attempt:', {
+        email: parsedData.data.email,
+        providedPassword: parsedData.data.password,
+        storedPasswordHash: user.password ? user.password.substring(0, 20) + '...' : null
+      });
+      
       // Check password
       const validPassword = user.password && await bcrypt.compare(parsedData.data.password, user.password);
       if (!validPassword) {
+        console.log('Password validation failed for user:', user.email);
         return res.status(401).json({ message: 'Invalid email or password' });
       }
       
       // Set session data
       req.session.userId = user.id;
       req.session.isAuthenticated = true;
+      console.log('User authenticated successfully, session set:', req.session.userId);
       
       // Return user without password
       const { password, ...userWithoutPassword } = user;
