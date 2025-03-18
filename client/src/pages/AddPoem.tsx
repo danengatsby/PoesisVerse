@@ -137,12 +137,13 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
     });
   };
 
-  // Funcție pentru gestionarea încărcării imagini
+  // Funcție pentru gestionarea încărcării fișierelor (imagini și audio)
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'audio') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
     const file = files[0];
+    console.log(`Încărcare fișier ${type}:`, file.name, "Dimensiune:", Math.round(file.size / 1024), "KB");
     
     if (type === 'image') {
       try {
@@ -156,6 +157,7 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
         setImagePreview(resizedImageUrl);
         // Actualizăm formularul cu baza64 pentru a putea fi trimis la server
         form.setValue('imageUrl', resizedImageUrl);
+        console.log("Imagine setată în formular, lungime:", resizedImageUrl.length);
       } catch (error) {
         console.error('Eroare la redimensionarea imaginii:', error);
         toast({
@@ -175,6 +177,9 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
             setAudioFile(file);
             setAudioName(file.name);
             form.setValue('audioUrl', audioUrl);
+            console.log("Fișier audio încărcat:", file.name, 
+                      "Tip:", file.type, 
+                      "Lungime URL:", audioUrl.length);
           }
         };
         reader.readAsDataURL(file);
@@ -214,6 +219,13 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
           
           if (response.ok) {
             const poemData = await response.json();
+            console.log("Date poem primite de la server:", {
+              id: poemData.id,
+              titlu: poemData.title,
+              autor: poemData.author,
+              hasAudio: !!poemData.audioUrl,
+              audioUrlLength: poemData.audioUrl?.length || 0
+            });
             
             // Populăm formularul cu datele poemului
             form.reset({
@@ -234,8 +246,12 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
             }
             
             if (poemData.audioUrl) {
-              setAudioName("Fisier audio existent");
-              console.log("Audio URL încărcat din server:", poemData.audioUrl.substring(0, 50) + "...");
+              setAudioName("Fișier audio existent");
+              // Salvăm și audioUrl în formular
+              form.setValue('audioUrl', poemData.audioUrl);
+              console.log("Audio URL încărcat din server:", 
+                poemData.audioUrl.substring(0, 50) + "...",
+                "Lungime totală:", poemData.audioUrl.length);
             }
           } else {
             toast({
