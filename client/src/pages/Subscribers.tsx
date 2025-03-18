@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Pencil, Trash, Plus, X, Check, UserPlus } from "lucide-react";
-import { Redirect } from "wouter";
+import { Loader2, Pencil, Trash, Plus, X, Check, UserPlus, ArrowLeft } from "lucide-react";
+import { Redirect, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ export default function Subscribers() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [newUser, setNewUser] = useState<NewUserFormData>({
@@ -237,7 +238,18 @@ export default function Subscribers() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Lista utilizatorilor</h1>
+        <div className="flex items-center">
+          <Button 
+            onClick={() => navigate("/")} 
+            variant="outline" 
+            className="mr-4"
+            title="Înapoi la pagina principală"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Înapoi
+          </Button>
+          <h1 className="text-2xl font-bold">Lista utilizatorilor</h1>
+        </div>
         <Button onClick={() => setShowAddDialog(true)} className="bg-green-600 hover:bg-green-700">
           <UserPlus className="h-4 w-4 mr-2" />
           Adaugă utilizator
