@@ -7,7 +7,7 @@ import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import StripePaymentForm from "@/components/subscription/StripePaymentForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
+import { CheckIcon, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
