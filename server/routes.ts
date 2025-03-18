@@ -38,6 +38,63 @@ const transporter = nodemailer.createTransport({
 });
 
 // Funcție pentru trimiterea de email-uri de confirmare a abonamentului
+// Funcție pentru email de bun venit la înregistrare
+async function sendWelcomeEmail(user: User): Promise<void> {
+  console.log("Trimitere email de bun venit pentru utilizator:", { 
+    email: user.email, 
+    username: user.username 
+  });
+  
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: user.email,
+    subject: 'Bine ai venit pe PoesisVerse!',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #4b5563;">PoesisVerse</h1>
+          <p style="color: #6b7280; font-size: 18px;">Lumea poeziei la un click distanță</p>
+        </div>
+        
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+          <h2 style="color: #1f2937; margin-top: 0;">Bine ai venit, ${user.username}!</h2>
+          <p style="color: #4b5563; font-size: 16px;">Îți mulțumim că te-ai alăturat comunității PoesisVerse.</p>
+          <p style="color: #4b5563; font-size: 16px;">Ești acum pregătit să explorezi o lume a poeziei cu opere clasice și contemporane.</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #1f2937;">Ce poți face pe PoesisVerse:</h3>
+          <ul style="color: #4b5563; font-size: 16px;">
+            <li>Citește poezii clasice și contemporane</li>
+            <li>Marchează poeziile tale favorite</li>
+            <li>Adaugă poezii noi în colecție</li>
+            <li>Abonează-te pentru acces la conținut premium</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center;">
+          <a href="${process.env.APP_URL || 'https://poeziiverse.com'}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Explorează poezii acum</a>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #6b7280; font-size: 14px; text-align: center;">
+          <p>Dacă ai întrebări sau probleme, te rugăm să ne contactezi la adresa <a href="mailto:support@poeziiverse.com" style="color: #4f46e5;">support@poeziiverse.com</a>.</p>
+          <p>&copy; ${new Date().getFullYear()} PoesisVerse. Toate drepturile rezervate.</p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email de bun venit trimis: %s', info.messageId);
+    return Promise.resolve();
+  } catch (error) {
+    console.error('Eroare la trimiterea email-ului de bun venit:', error);
+    return Promise.reject(error);
+  }
+}
+
+// Funcție pentru email de confirmare a abonamentului
 async function sendSubscriptionEmail(user: User): Promise<void> {
   console.log("Trimitere email de confirmare pentru utilizator:", { 
     email: user.email, 
