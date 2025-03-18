@@ -67,6 +67,8 @@ export class MemStorage implements IStorage {
       stripeCustomerId: null,
       stripeSubscriptionId: null,
       createdAt: new Date(),
+      subscribedAt: null,
+      subscriptionEndDate: null
     };
     this.users.set(testUser.id, testUser);
     
@@ -81,6 +83,8 @@ export class MemStorage implements IStorage {
       stripeCustomerId: null,
       stripeSubscriptionId: null,
       createdAt: new Date(),
+      subscribedAt: null,
+      subscriptionEndDate: null
     };
     this.users.set(savedUser.id, savedUser);
   }
@@ -218,7 +222,9 @@ export class MemStorage implements IStorage {
       isSubscribed: false,
       stripeCustomerId: null,
       stripeSubscriptionId: null,
-      createdAt: new Date()
+      createdAt: new Date(),
+      subscribedAt: null,
+      subscriptionEndDate: null
     };
     this.users.set(id, newUser);
     return newUser;
@@ -418,7 +424,9 @@ export class DatabaseStorage implements IStorage {
           is_subscribed BOOLEAN DEFAULT FALSE,
           stripe_customer_id TEXT,
           stripe_subscription_id TEXT,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          subscribed_at TIMESTAMP WITH TIME ZONE,
+          subscription_end_date TIMESTAMP WITH TIME ZONE
         );
         
         CREATE TABLE IF NOT EXISTS poems (
@@ -527,7 +535,9 @@ export class DatabaseStorage implements IStorage {
         ...user,
         isSubscribed: false,
         stripeCustomerId: null,
-        stripeSubscriptionId: null
+        stripeSubscriptionId: null,
+        subscribedAt: null,
+        subscriptionEndDate: null
       }).returning();
       return result[0];
     } catch (error) {
