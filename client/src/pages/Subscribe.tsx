@@ -35,37 +35,39 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   const [isElementLoading, setIsElementLoading] = useState(true);
   const [elementsError, setElementsError] = useState<string | null>(null);
   
-  // Monitor when Elements are fully loaded
+  // Monitor when Elements are fully loaded and enable button after a reasonable delay
+  useEffect(() => {
+    // Enable the button after a delay regardless of other events
+    // This ensures users can try to complete the payment even if
+    // Stripe's events don't fire properly
+    const shortTimeoutId = setTimeout(() => {
+      setIsElementLoading(false);
+    }, 2000);
+    
+    return () => {
+      clearTimeout(shortTimeoutId);
+    };
+  }, []);
+  
+  // Log when elements are ready
   useEffect(() => {
     if (!elements) {
       return;
     }
-
-    const loadingListener = (event: { elementType: string; complete: boolean }) => {
-      if (event.elementType === 'payment' && event.complete) {
+    
+    console.log("Elements ready:", elements);
+    
+    // Try to get the payment element to check if it's ready
+    try {
+      const paymentElement = elements.getElement('payment');
+      if (paymentElement) {
+        console.log("Payment element found, enabling button");
         setIsElementLoading(false);
       }
-    };
-
-    const errorListener = (event: { error: { message: string } }) => {
-      if (event.error) {
-        setElementsError(event.error.message);
-        toast({
-          title: "Payment Form Error",
-          description: event.error.message,
-          variant: "destructive",
-        });
-      }
-    };
-
-    elements.on('loaderror', errorListener);
-    elements.on('loading', loadingListener);
-
-    return () => {
-      elements.off('loaderror', errorListener);
-      elements.off('loading', loadingListener);
-    };
-  }, [elements, toast]);
+    } catch (error) {
+      console.log("Error getting payment element:", error);
+    }
+  }, [elements]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,7 +189,7 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
       <Button 
         type="submit" 
         className="w-full bg-primary hover:bg-primary-dark text-white"
-        disabled={!stripe || !elements || isSubmitting || isElementLoading}
+        disabled={isSubmitting}
       >
         {isSubmitting ? (
           <span className="flex items-center">
