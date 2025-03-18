@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, DatabaseStorage } from "./storage";
 import { z } from "zod";
 import Stripe from "stripe";
 import bcrypt from "bcryptjs";
@@ -28,11 +28,11 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Configure session middleware for express
+  // Configure session middleware for express with PostgreSQL session store
   app.use(session({
-    store: new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    }),
+    store: storage instanceof DatabaseStorage 
+      ? (storage as DatabaseStorage).sessionStore 
+      : new MemoryStore({ checkPeriod: 86400000 }),
     secret: process.env.SESSION_SECRET || 'poetrysecret123',
     resave: false,
     saveUninitialized: false,
