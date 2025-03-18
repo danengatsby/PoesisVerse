@@ -42,9 +42,9 @@ const formSchema = z.object({
   }),
   isPremium: z.boolean().default(false),
   imageUrl: z.string().optional(),
-  thumbnailUrl: z.string().optional(),
+  audioUrl: z.string().optional(),
   imageFile: z.any().optional(),
-  thumbnailFile: z.any().optional(),
+  audioFile: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -58,9 +58,9 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
   
   // State pentru fișierele încărcate și preview-uri
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [audioName, setAudioName] = useState<string | null>(null);
 
   // Funcție pentru redimensionarea imaginilor înainte de încărcare
   const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
@@ -113,36 +113,54 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
   };
 
   // Funcție pentru gestionarea încărcării imagini
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'thumbnail') => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'audio') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
     const file = files[0];
     
-    try {
-      // Redimensionăm imaginea (dimensiuni diferite pentru imagine și thumbnail)
-      const maxWidth = type === 'image' ? 1200 : 300;
-      const maxHeight = type === 'image' ? 1200 : 300;
-      
-      const resizedImageUrl = await resizeImage(file, maxWidth, maxHeight);
-      
-      if (type === 'image') {
+    if (type === 'image') {
+      try {
+        // Redimensionăm imaginea
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+        
+        const resizedImageUrl = await resizeImage(file, maxWidth, maxHeight);
+        
         setImageFile(file);
         setImagePreview(resizedImageUrl);
         // Actualizăm formularul cu baza64 pentru a putea fi trimis la server
         form.setValue('imageUrl', resizedImageUrl);
-      } else {
-        setThumbnailFile(file);
-        setThumbnailPreview(resizedImageUrl);
-        form.setValue('thumbnailUrl', resizedImageUrl);
+      } catch (error) {
+        console.error('Eroare la redimensionarea imaginii:', error);
+        toast({
+          variant: "destructive",
+          title: "Eroare",
+          description: "Nu s-a putut procesa imaginea. Încercați altă imagine.",
+        });
       }
-    } catch (error) {
-      console.error('Eroare la redimensionarea imaginii:', error);
-      toast({
-        variant: "destructive",
-        title: "Eroare",
-        description: "Nu s-a putut procesa imaginea. Încercați altă imagine.",
-      });
+    } else {
+      // Procesare fișier audio
+      try {
+        // Pentru fisierul audio, stocăm URL-ul pentru a-l putea trimite la server
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            const audioUrl = event.target.result as string;
+            setAudioFile(file);
+            setAudioName(file.name);
+            form.setValue('audioUrl', audioUrl);
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Eroare la încărcarea fișierului audio:', error);
+        toast({
+          variant: "destructive",
+          title: "Eroare",
+          description: "Nu s-a putut procesa fișierul audio. Încercați alt fișier.",
+        });
+      }
     }
   };
   
@@ -157,7 +175,7 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
       category: "",
       isPremium: false,
       imageUrl: "",
-      thumbnailUrl: "",
+      audioUrl: "",
     },
   });
 
@@ -178,7 +196,7 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
         ...values,
         // Dacă există preview, asigură-te că este trimis corespunzător
         imageUrl: values.imageUrl || imagePreview || "",
-        thumbnailUrl: values.thumbnailUrl || thumbnailPreview || "",
+        audioUrl: values.audioUrl || "",
       };
       
       const response = await apiRequest("POST", "/api/poems", dataToSend);
@@ -368,39 +386,37 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
 
             <FormField
               control={form.control}
-              name="thumbnailUrl"
+              name="audioUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>URL Miniatură</FormLabel>
+                  <FormLabel>Fișier Audio</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
-                      <Input placeholder="https://example.com/thumbnail.jpg" {...field} />
+                      <Input placeholder="https://example.com/audio.mp3" {...field} />
                     </FormControl>
-                    <label htmlFor="thumbnail-upload" className="cursor-pointer">
+                    <label htmlFor="audio-upload" className="cursor-pointer">
                       <div className="px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
                         Încarcă
                       </div>
                       <input
-                        id="thumbnail-upload"
+                        id="audio-upload"
                         type="file"
                         className="hidden"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, 'thumbnail')}
+                        accept="audio/*"
+                        onChange={(e) => handleImageUpload(e, 'audio')}
                       />
                     </label>
                   </div>
-                  {thumbnailPreview && (
+                  {audioName && (
                     <div className="mt-2">
-                      <p className="text-sm mb-1">Previzualizare:</p>
-                      <img 
-                        src={thumbnailPreview} 
-                        alt="Previzualizare miniatură" 
-                        className="max-w-full h-auto max-h-40 object-contain border rounded"
-                      />
+                      <p className="text-sm mb-1">Fișier selectat:</p>
+                      <div className="text-sm p-2 border rounded bg-gray-50">
+                        {audioName}
+                      </div>
                     </div>
                   )}
                   <FormDescription>
-                    URL-ul miniaturii sau încarcă de pe calculator
+                    URL-ul fișierului audio sau încarcă de pe calculator
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
