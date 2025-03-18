@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import {
   Book,
   BookOpen,
@@ -292,23 +293,86 @@ export default function AdminDashboard() {
           </div>
 
           {/* Distribuția categoriilor */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Distribuția categoriilor</CardTitle>
-              <CardDescription>
-                Numărul de poeme pe fiecare categorie
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(stats.categories).map(([category, count]) => (
-                  <Badge key={category} variant="outline" className="px-3 py-1 text-sm">
-                    {category}: {count}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Distribuția categoriilor</CardTitle>
+                <CardDescription>
+                  Numărul de poeme pe fiecare categorie
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px] flex flex-col">
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {Object.entries(stats.categories).map(([category, count]) => (
+                    <Badge key={category} variant="outline" className="px-3 py-1 text-sm">
+                      {category}: {count}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={Object.entries(stats.categories).map(([name, value], index) => ({
+                          name,
+                          value
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={2}
+                        dataKey="value"
+                        nameKey="name"
+                        label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {Object.entries(stats.categories).map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={[
+                              '#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', 
+                              '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'
+                            ][index % 8]} 
+                          />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip formatter={(value, name) => [value, name]} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Premium vs Gratuit</CardTitle>
+                <CardDescription>
+                  Distribuția poemelor după tip
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { name: 'Premium', value: stats.premiumPoems },
+                      { name: 'Gratuit', value: stats.freePoems }
+                    ]}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Bar dataKey="value" name="Număr poeme">
+                      <Cell fill="#4f46e5" />
+                      <Cell fill="#10b981" />
+                    </Bar>
+                    <RechartsTooltip formatter={(value) => [`${value} poeme`, ""]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Filtre și căutare */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
