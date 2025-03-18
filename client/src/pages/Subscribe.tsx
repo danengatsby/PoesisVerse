@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, ArrowLeft, AlertTriangle } from "lucide-react";
+import { CheckIcon, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -18,6 +18,7 @@ let stripePromise: ReturnType<typeof loadStripe> | null = null;
 try {
   if (import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
     stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+    console.log("Stripe initialized with public key");
   } else {
     console.warn('Missing Stripe public key. Stripe functionality will not work.');
   }
@@ -25,167 +26,142 @@ try {
   console.error('Error initializing Stripe:', error);
 }
 
-const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId: string } }) => {
-  const stripe = useStripe();
-  const elements = useElements();
+// Separate component for the Stripe form
+function StripePaymentForm({ 
+  clientSecret, 
+  plan, 
+  stripePromise,
+  refreshSubscription,
+  onCancel
+}: { 
+  clientSecret: string; 
+  plan: { type: string, price: string, priceId: string };
+  stripePromise: ReturnType<typeof loadStripe>;
+  refreshSubscription: () => void;
+  onCancel: () => void;
+}) {
   const { toast } = useToast();
-  const { refreshSubscription } = useAuth();
   const [, setLocation] = useLocation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isElementLoading, setIsElementLoading] = useState(true);
-  const [elementsError, setElementsError] = useState<string | null>(null);
-  const [isPaymentElementMounted, setIsPaymentElementMounted] = useState(false);
-  
-  // Give more time for the element to properly mount
-  useEffect(() => {
-    const longTimeoutId = setTimeout(() => {
-      // After a longer delay, check if we've found the element yet
-      if (!isPaymentElementMounted) {
-        console.log("PaymentElement not mounted after timeout");
-        setIsElementLoading(false);
-      }
-    }, 4000);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [paymentInitialized, setPaymentInitialized] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Function to handle the payment form submit
+  const handlePaymentSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     
-    return () => {
-      clearTimeout(longTimeoutId);
-    };
-  }, [isPaymentElementMounted]);
-  
-  // Check for element readiness
-  useEffect(() => {
-    if (!elements) {
-      return;
-    }
-    
-    // Add a delay before checking for payment element
-    // This gives Stripe time to inject the iframe
-    const checkPaymentElementInterval = setInterval(() => {
-      try {
-        const paymentElement = elements.getElement('payment');
-        if (paymentElement) {
-          console.log("Payment element found and mounted successfully");
-          setIsPaymentElementMounted(true);
-          setIsElementLoading(false);
-          clearInterval(checkPaymentElementInterval);
-        }
-      } catch (error) {
-        console.log("Still waiting for payment element...");
-      }
-    }, 500);
-    
-    // Clear interval after 10 seconds maximum wait time
-    const maxWaitTimeout = setTimeout(() => {
-      clearInterval(checkPaymentElementInterval);
-      setIsElementLoading(false);
-    }, 10000);
-    
-    return () => {
-      clearInterval(checkPaymentElementInterval);
-      clearTimeout(maxWaitTimeout);
-    };
-  }, [elements]);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!stripe || !elements) {
+    if (!stripePromise) {
       toast({
-        title: "Payment Service Unavailable",
-        description: "The payment service is not initialized properly. Please try again later.",
+        title: "Payment Error",
+        description: "Payment service is not available",
         variant: "destructive",
       });
       return;
     }
     
-    // Double-check that the payment element is actually mounted before submitting
+    setIsLoading(true);
+    
     try {
-      const paymentElement = elements.getElement('payment');
-      if (!paymentElement) {
-        toast({
-          title: "Payment Form Not Ready",
-          description: "The payment form hasn't loaded properly. Please refresh the page and try again.",
-          variant: "destructive",
-        });
-        return;
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error("Failed to load Stripe");
       }
-    } catch (error) {
-      toast({
-        title: "Payment Form Error",
-        description: "There was an error with the payment form. Please refresh the page and try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      // We need to keep window.location.origin here as it's needed for Stripe redirect
+      
+      // Using redirect flow instead of elements
       const { error } = await stripe.confirmPayment({
-        elements,
+        clientSecret,
         confirmParams: {
-          // Can't use router directly in redirect URL for Stripe
           return_url: `${window.location.origin}/?subscription=success`,
+          payment_method_data: {
+            billing_details: {
+              name: 'PoesisVerse User', // Default name
+            },
+          },
         },
+        redirect: 'if_required',
       });
       
       if (error) {
+        console.error("Payment error:", error);
+        setError(error.message || "Payment failed");
         toast({
-          title: "Payment Failed",
-          description: error.message || "An error occurred during payment",
+          title: "Payment Error",
+          description: error.message || "There was a problem with your payment",
           variant: "destructive",
         });
       } else {
-        // If the payment is successful on the client side, refresh the subscription status immediately
-        // This helps in cases where the webhook hasn't processed yet
+        // Success handling
         refreshSubscription();
-        
         toast({
           title: "Payment Successful",
-          description: "You are now subscribed!",
+          description: "Thank you for subscribing!",
         });
-        
-        // Redirect to home page after successful payment
         setTimeout(() => {
           setLocation('/?subscription=success');
-        }, 1500);
+        }, 1000);
       }
-    } catch (error: any) {
-      console.error("Payment error:", error);
+    } catch (err: any) {
+      console.error("Exception during payment:", err);
+      setError(err.message || "An unexpected error occurred");
       toast({
-        title: "Payment Error",
-        description: error.message || "An unexpected error occurred",
+        title: "Payment Failed",
+        description: err.message || "There was a problem processing your payment",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
   
-  if (elementsError) {
+  // Initialize Stripe Elements once
+  useEffect(() => {
+    const initializePayment = async () => {
+      setIsLoading(true);
+      try {
+        setPaymentInitialized(true);
+        // We show the form immediately and rely on Stripe's redirect
+      } catch (err) {
+        console.error("Failed to initialize payment:", err);
+        setError("Failed to initialize payment form");
+      } finally {
+        // Allow the form to be shown after a delay
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
+      }
+    };
+    
+    if (clientSecret && !paymentInitialized) {
+      initializePayment();
+    }
+  }, [clientSecret, paymentInitialized]);
+  
+  // If we have an error, show it instead of the form
+  if (error) {
     return (
       <div className="space-y-6">
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Payment Form Error</AlertTitle>
-          <AlertDescription>
-            {elementsError}
-          </AlertDescription>
+          <AlertTitle>Payment Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
         
-        <div className="flex justify-between mt-6">
+        <div className="flex justify-between">
           <Button 
             variant="outline" 
-            onClick={() => window.location.reload()}
+            onClick={onCancel}
           >
-            Try Again
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Plans
           </Button>
           
           <Button 
-            variant="default" 
-            onClick={() => setLocation('/')}
+            variant="default"
+            onClick={() => window.location.reload()}
           >
-            Return to Home
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try Again
           </Button>
         </div>
       </div>
@@ -193,55 +169,75 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   }
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-secondary/10 p-6 rounded-lg mb-6">
-        <h3 className="font-heading text-lg font-semibold mb-2">Subscription Summary</h3>
-        <div className="flex justify-between mb-4">
-          <span className="text-neutral-600">Plan:</span>
-          <span className="font-medium">{plan.type} Subscription</span>
+    <div className="space-y-6">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-4" />
+          <p className="text-neutral-600">Initializing payment...</p>
         </div>
-        <div className="flex justify-between mb-4">
-          <span className="text-neutral-600">Price:</span>
-          <span className="font-medium">{plan.price}</span>
-        </div>
-        <div className="border-t border-neutral-200 pt-4 flex justify-between">
-          <span className="text-neutral-800 font-medium">Total:</span>
-          <span className="text-primary font-bold">{plan.price}</span>
-        </div>
-      </div>
-      
-      <div className="space-y-4">
-        <h3 className="font-heading text-lg font-semibold">Payment Details</h3>
-        {isElementLoading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin w-6 h-6 border-3 border-primary border-t-transparent rounded-full" aria-label="Loading payment form"/>
+      ) : (
+        <form ref={formRef} onSubmit={handlePaymentSubmit} className="space-y-6">
+          <div className="bg-secondary/10 p-6 rounded-lg">
+            <h3 className="font-heading text-lg font-semibold mb-2">Subscription Summary</h3>
+            <div className="flex justify-between mb-2">
+              <span className="text-neutral-600">Plan:</span>
+              <span className="font-medium">{plan.type} Subscription</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="text-neutral-600">Price:</span>
+              <span className="font-medium">{plan.price}</span>
+            </div>
+            <div className="border-t border-neutral-200 pt-3 mt-3 flex justify-between">
+              <span className="text-neutral-800 font-medium">Total:</span>
+              <span className="text-primary font-bold">{plan.price}</span>
+            </div>
           </div>
-        )}
-        <div className={isElementLoading ? 'opacity-0 h-0' : 'opacity-100'}>
-          <PaymentElement />
-        </div>
-      </div>
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-primary hover:bg-primary-dark text-white"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <span className="flex items-center">
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-            </svg>
-            Processing...
-          </span>
-        ) : (
-          "Complete Subscription"
-        )}
-      </Button>
-    </form>
+          
+          <div className="space-y-4">
+            <h3 className="font-heading text-lg font-semibold">Payment Information</h3>
+            <p className="text-neutral-600 text-sm">
+              You will be redirected to Stripe's secure payment page to complete your subscription.
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary-dark text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                "Complete Subscription"
+              )}
+            </Button>
+            
+            <Button 
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          </div>
+          
+          <div className="text-xs text-neutral-500 mt-4 text-center">
+            <p>Your payment will be securely processed by Stripe.</p>
+            <p>We do not store your payment details.</p>
+          </div>
+        </form>
+      )}
+    </div>
   );
-};
+}
 
 export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -454,30 +450,14 @@ export default function Subscribe() {
                 </>
               ) : (
                 <>
-                  {selectedPlan && clientSecret && stripePromise ? (
-                    <Elements 
-                      stripe={stripePromise} 
-                      options={{ 
-                        clientSecret,
-                        appearance: {
-                          theme: 'stripe',
-                          variables: {
-                            colorPrimary: '#5c6ac4',
-                            fontFamily: 'system-ui, sans-serif',
-                            borderRadius: '8px',
-                          },
-                        },
-                        loader: 'always',
-                        fonts: [
-                          {
-                            cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap',
-                          }
-                        ]
-                      }}
-                      key={clientSecret} // Force re-initialization when client secret changes
-                    >
-                      <SubscribeForm plan={selectedPlan} />
-                    </Elements>
+                  {selectedPlan && clientSecret ? (
+                    <StripePaymentForm 
+                      clientSecret={clientSecret} 
+                      plan={selectedPlan} 
+                      stripePromise={stripePromise} 
+                      refreshSubscription={refreshSubscription}
+                      onCancel={() => setSelectedPlan(null)}
+                    />
                   ) : selectedPlan && !clientSecret ? (
                     <div className="py-6">
                       <Alert variant="destructive" className="mb-4">
