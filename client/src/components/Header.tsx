@@ -3,15 +3,19 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CrownIcon, PlusCircleIcon, LogOutIcon, MenuIcon } from "lucide-react";
+import { CrownIcon, PlusCircleIcon, LogOutIcon, MenuIcon, MailIcon } from "lucide-react";
 import LoginModal from "./auth/LoginModal";
 import SignupModal from "./auth/SignupModal";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Header() {
   const { isAuthenticated, user, logout, isSubscribed } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const toggleMobileMenu = () => {
@@ -38,6 +42,37 @@ export default function Header() {
   const navigateToSubscribe = () => {
     setLocation("/subscribe");
     setShowMobileMenu(false);
+  };
+  
+  const testEmail = async () => {
+    try {
+      setIsTestingEmail(true);
+      const response = await apiRequest("POST", "/api/test-email");
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Email trimis cu succes",
+          description: `Un email de test a fost trimis la ${user?.email}`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Eroare la trimiterea email-ului",
+          description: data.error || "A apărut o eroare la trimiterea email-ului de test",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Eroare la trimiterea email-ului:", error);
+      toast({
+        title: "Eroare la trimiterea email-ului",
+        description: "A apărut o eroare la trimiterea email-ului de test",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingEmail(false);
+    }
   };
 
   return (

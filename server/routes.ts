@@ -19,22 +19,34 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
   
 // Configurare nodemailer pentru trimiterea de email-uri
+console.log("Configurare email cu:", { 
+  emailUser: process.env.EMAIL_USER ? "disponibil" : "lipsește", 
+  emailPass: process.env.EMAIL_PASSWORD ? "disponibil" : "lipsește" 
+});
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',  // Folosim Gmail pentru simplitate
   host: 'smtp.gmail.com',
   port: 465,
   secure: true, // true pentru SSL
   auth: {
-    user: process.env.EMAIL_USER || 'poeziiverse@gmail.com', // email-ul app-ului
-    pass: process.env.EMAIL_PASSWORD || 'app_password' // parola de aplicație (pentru Gmail)
-  }
+    user: process.env.EMAIL_USER, // email-ul app-ului
+    pass: process.env.EMAIL_PASSWORD // parola de aplicație (pentru Gmail)
+  },
+  debug: true, // Activăm debugging pentru a vedea erori detaliate
+  logger: true // Activăm logging
 });
 
 // Funcție pentru trimiterea de email-uri de confirmare a abonamentului
 async function sendSubscriptionEmail(user: User): Promise<void> {
+  console.log("Trimitere email de confirmare pentru utilizator:", { 
+    email: user.email, 
+    username: user.username 
+  });
+  
   // Template email pentru utilizator nou abonat
   const mailOptions = {
-    from: process.env.EMAIL_USER || 'poeziiverse@gmail.com',
+    from: process.env.EMAIL_USER,
     to: user.email,
     subject: 'Confirmare abonament PoesisVerse Premium',
     html: `
@@ -443,6 +455,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return res.status(500).json({ message: 'Failed to fetch user profile' });
+    }
+  });
+  
+  // Test email endpoint (requires authentication)
+  app.post("/api/test-email", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      console.log("Test email pentru:", user.email);
+      
+      try {
+        await sendSubscriptionEmail(user);
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Email test trimis cu succes'
+        });
+      } catch (emailError) {
+        console.error('Error sending test email:', emailError);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Failed to send test email', 
+          error: emailError.message || 'Unknown error' 
+        });
+      }
+    } catch (error) {
+      console.error('Error in test email endpoint:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to process test email request',
+        error: error.message || 'Unknown error'
+      });
     }
   });
   
