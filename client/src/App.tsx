@@ -18,6 +18,51 @@ import { Switch, Route, Link, useLocation, useRoute } from "wouter";
 // Import debug component
 import { DebugComponent } from "@/components/DebugComponent";
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Error caught by ErrorBoundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="min-h-screen flex items-center justify-center bg-red-50">
+          <div className="p-6 bg-white rounded-lg shadow-lg max-w-md">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
+            <p className="text-gray-700 mb-4">
+              An error occurred in the application. Please try refreshing the page.
+            </p>
+            <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto max-h-40">
+              {this.state.error?.message}
+            </pre>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // Navigation component
 const Navigation = () => {
   const auth = useAuth();
@@ -92,7 +137,26 @@ const ProtectedRoute = ({ path, children }: { path: string, children: React.Reac
     );
   }
   
-  return isAuthenticated ? <>{children}</> : null;
+  // The key change is here - we now provide an explicit match props to any components that need it
+  const matchProps = { match: { params: {} } };
+  return isAuthenticated ? (
+    <div {...matchProps}>
+      {children}
+    </div>
+  ) : null;
+};
+
+// Wrapper component to provide match prop to any component
+const WithMatch = ({ children }: { children: React.ReactNode }) => {
+  // Create a match object for compatibility with components expecting it
+  const matchProps = { match: { params: {} } };
+  
+  // We need to clone the child element and add the match prop
+  return (
+    <div {...matchProps}>
+      {children}
+    </div>
+  );
 };
 
 // Router component
@@ -101,23 +165,33 @@ const Router = () => {
   return (
     <Switch>
       <Route path="/">
-        <Home />
+        <WithMatch>
+          <Home />
+        </WithMatch>
       </Route>
       
       <Route path="/auth">
-        <AuthPage />
+        <WithMatch>
+          <AuthPage />
+        </WithMatch>
       </Route>
       
       <ProtectedRoute path="/subscribe">
-        <Subscribe />
+        <WithMatch>
+          <Subscribe />
+        </WithMatch>
       </ProtectedRoute>
       
       <ProtectedRoute path="/add-poem">
-        <AddPoem />
+        <WithMatch>
+          <AddPoem />
+        </WithMatch>
       </ProtectedRoute>
       
       <Route path="/:rest*">
-        <NotFound />
+        <WithMatch>
+          <NotFound />
+        </WithMatch>
       </Route>
     </Switch>
   );
@@ -145,17 +219,21 @@ function App() {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col">
-          <Navigation />
-          <div className="flex-1 container mx-auto py-6 px-4">
-            <DebugComponent name="Router">
-              <Router />
-            </DebugComponent>
+      <ErrorBoundary>
+        <AuthProvider>
+          <div className="min-h-screen flex flex-col">
+            <Navigation />
+            <div className="flex-1 container mx-auto py-6 px-4">
+              <ErrorBoundary>
+                <DebugComponent name="Router">
+                  <Router />
+                </DebugComponent>
+              </ErrorBoundary>
+            </div>
           </div>
-        </div>
-        <Toaster />
-      </AuthProvider>
+          <Toaster />
+        </AuthProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

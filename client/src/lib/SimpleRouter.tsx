@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useLocation as useWouterLocation } from 'wouter';
 
 // Define a simple router context
 interface RouterContextType {
@@ -14,9 +15,22 @@ const RouterContext = createContext<RouterContextType>({
   match: { params: {} }, // Default empty match object
 });
 
-// Custom hook for accessing the router
+// COMPATIBILITY LAYER: This hook provides SimpleRouter interface using wouter under the hood
 export function useRouter() {
-  return useContext(RouterContext);
+  const [location, setLocation] = useWouterLocation();
+  
+  // Create a navigate function that uses wouter's setLocation
+  const navigate = (to: string) => {
+    console.log(`SimpleRouter navigate: ${to}`);
+    setLocation(to);
+  };
+  
+  // Return an object that matches the SimpleRouter interface
+  return {
+    path: location,
+    navigate,
+    match: { params: {} }
+  };
 }
 
 // Props for the router provider component
