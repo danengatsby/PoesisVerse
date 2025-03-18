@@ -14,11 +14,8 @@ export function useAuth() {
   const login = async (email: string, password: string) => {
     try {
       const response = await apiRequest("POST", "/api/login", { email, password });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to sign in");
-      }
+      // apiRequest aruncă excepție dacă răspunsul nu este ok
+      // Dacă ajungem aici, înseamnă că răspunsul este ok
       
       const userData = await response.json();
       // Context will be updated via the AuthContext useEffect that checks the session
@@ -45,11 +42,8 @@ export function useAuth() {
         email, 
         password 
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create account");
-      }
+      // apiRequest aruncă excepție dacă răspunsul nu este ok
+      // Dacă ajungem aici, înseamnă că răspunsul este ok
       
       const userData = await response.json();
       // Context will be updated via the AuthContext useEffect that checks the session
@@ -72,11 +66,8 @@ export function useAuth() {
   const logout = async () => {
     try {
       const response = await apiRequest("POST", "/api/logout", {});
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to log out");
-      }
+      // apiRequest aruncă excepție dacă răspunsul nu este ok
+      // Dacă ajungem aici, înseamnă că răspunsul este ok
       
       // Context will be updated via the AuthContext useEffect that checks the session
       

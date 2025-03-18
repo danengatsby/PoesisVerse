@@ -33,6 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', // Adăugat pentru a permite CORS
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   }));
