@@ -4,12 +4,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface RouterContextType {
   path: string;
   navigate: (to: string) => void;
+  match?: { params: Record<string, string> }; // Add match property for compatibility with wouter
 }
 
 // Create the context with default values
 const RouterContext = createContext<RouterContextType>({
   path: window.location.pathname,
   navigate: () => {},
+  match: { params: {} }, // Default empty match object
 });
 
 // Custom hook for accessing the router
@@ -44,7 +46,7 @@ export function RouterProvider({ children }: RouterProviderProps) {
 
   // Provide routing context to children
   return (
-    <RouterContext.Provider value={{ path, navigate }}>
+    <RouterContext.Provider value={{ path, navigate, match: { params: {} } }}>
       {children}
     </RouterContext.Provider>
   );
@@ -53,7 +55,7 @@ export function RouterProvider({ children }: RouterProviderProps) {
 // Props for Route component
 interface RouteProps {
   path: string;
-  component: React.ComponentType;
+  component: React.ComponentType<{ match?: { params: Record<string, string> } }>;
 }
 
 // Route component for rendering based on current path
@@ -64,14 +66,18 @@ export function Route({ path, component: Component }: RouteProps) {
   if (path === '*') {
     const definedRoutes = ['/', '/auth', '/subscribe', '/add-poem'];
     if (!definedRoutes.includes(currentPath)) {
-      return <Component />;
+      // Create a match object for compatibility with wouter
+      const match = { params: {} };
+      return <Component match={match} />;
     }
     return null;
   }
   
   // Simple path matching - exact match only for now
   if (currentPath === path) {
-    return <Component />;
+    // Create a match object for compatibility with wouter
+    const match = { params: {} };
+    return <Component match={match} />;
   }
   
   return null;

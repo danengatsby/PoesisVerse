@@ -14,40 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 // Import our custom router components
 import { RouterProvider, Route, Link } from "./lib/SimpleRouter";
-
-// Protected route component
-const ProtectedRoute = ({ path, component: Component }: { path: string, component: React.ComponentType }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const auth = useAuth();
-  
-  // Use a regular Route but with conditional rendering inside
-  return (
-    <Route
-      path={path}
-      component={() => {
-        if (isLoading) {
-          return (
-            <div className="flex items-center justify-center min-h-screen">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          );
-        }
-        
-        if (!isAuthenticated) {
-          // We'll handle the redirect when the component mounts
-          // This approach avoids direct window.location modification
-          React.useEffect(() => {
-            const event = new CustomEvent('navigate', { detail: { path: '/auth' } });
-            window.dispatchEvent(event);
-          }, []);
-          return null;
-        }
-        
-        return <Component />;
-      }}
-    />
-  );
-};
+import { ProtectedRoute } from "./lib/ProtectedRoute";
 
 // Navigation component
 const Navigation = () => {
