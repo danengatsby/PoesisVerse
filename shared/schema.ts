@@ -21,7 +21,7 @@ export const poems = pgTable("poems", {
   content: text("content").notNull(),
   author: text("author").notNull(),
   imageUrl: text("image_url"),
-  thumbnailUrl: text("thumbnail_url"),
+  audioUrl: text("audio_url"),
   description: text("description"),
   year: text("year"),
   category: text("category"),

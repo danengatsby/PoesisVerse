@@ -18,7 +18,7 @@ interface Poem {
   content: string;
   author: string;
   imageUrl: string;
-  thumbnailUrl: string;
+  audioUrl: string;
   description?: string;
   year?: string;
   category?: string;
