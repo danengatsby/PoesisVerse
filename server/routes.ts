@@ -859,7 +859,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // If this payment was for a subscription plan
           if (paymentIntent.metadata && paymentIntent.metadata.userId && paymentIntent.metadata.isSubscription === 'true') {
-            const { userId } = paymentIntent.metadata;
+            const { userId, planType = 'monthly' } = paymentIntent.metadata;
+            
+            // Validate planType - default to monthly if invalid
+            const subscriptionType = planType === 'annual' ? 'annual' : 'monthly';
             
             // Get the user
             const user = await storage.getUser(parseInt(userId));
@@ -872,13 +875,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Update user subscription status directly
             await storage.updateUserSubscription(user.id, true);
             
-            console.log(`User ${userId} subscription activated through direct payment`);
+            console.log(`User ${userId} ${subscriptionType} subscription activated through direct payment`);
             
-            // Trimite email de confirmare a abonamentului
+            // Trimite email de confirmare a abonamentului cu tipul corect
             try {
-              await sendSubscriptionEmail(user);
+              await sendSubscriptionEmail(user, subscriptionType);
             } catch (emailError: any) {
-              console.error('Failed to send subscription confirmation email:', emailError);
+              console.error(`Failed to send ${subscriptionType} subscription confirmation email:`, emailError);
             }
           }
           break;

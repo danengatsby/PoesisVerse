@@ -63,12 +63,15 @@ function CheckoutForm({
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
       // Payment success
       try {
-        // Mark the subscription as successful and trigger the email
+        // Mark the subscription as successful and trigger the email with plan type
         const response = await fetch('/api/mark-subscription-success', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            planType: plan.type // Send the plan type (monthly or annual)
+          }),
           credentials: 'include'
         });
         
@@ -76,7 +79,7 @@ function CheckoutForm({
         if (!data.success) {
           console.error('Error marking subscription as successful:', data.error);
         } else {
-          console.log('Subscription marked as successful:', data.message);
+          console.log(`${plan.type} subscription marked as successful:`, data.message);
         }
       } catch (apiError) {
         console.error('Error calling mark-subscription-success:', apiError);
