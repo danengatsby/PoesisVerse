@@ -413,6 +413,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = newUser.id;
       req.session.isAuthenticated = true;
       
+      // Trimitere email de bun venit
+      try {
+        await sendWelcomeEmail(newUser);
+        console.log('Email de bun venit trimis cu succes pentru:', newUser.email);
+      } catch (emailError: any) {
+        console.error('Eroare la trimiterea email-ului de bun venit:', emailError);
+        // Nu returnăm eroare, continuăm cu înregistrarea chiar dacă emailul eșuează
+      }
+      
       // Return user without password
       const { password, ...userWithoutPassword } = newUser;
       return res.status(201).json(userWithoutPassword);
