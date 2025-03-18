@@ -62,10 +62,14 @@ interface RouteProps {
 export function Route({ path, component: Component }: RouteProps) {
   const { path: currentPath } = useRouter();
   
+  // Add console logging for debugging
+  console.log(`Route check: currentPath=${currentPath}, routePath=${path}`);
+  
   // Special case for wildcard route (404 page)
   if (path === '*') {
     const definedRoutes = ['/', '/auth', '/subscribe', '/add-poem'];
     if (!definedRoutes.includes(currentPath)) {
+      console.log(`Rendering wildcard route (* matched at ${currentPath})`);
       // Create a match object for compatibility with wouter
       const match = { params: {} };
       return <Component match={match} />;
@@ -75,9 +79,20 @@ export function Route({ path, component: Component }: RouteProps) {
   
   // Simple path matching - exact match only for now
   if (currentPath === path) {
+    console.log(`Route matched: ${path}`);
     // Create a match object for compatibility with wouter
     const match = { params: {} };
-    return <Component match={match} />;
+    try {
+      return <Component match={match} />;
+    } catch (error) {
+      console.error(`Error rendering component for path ${path}:`, error);
+      return (
+        <div className="p-4 bg-red-100 text-red-800 rounded">
+          <h3 className="font-bold">Error in route {path}:</h3>
+          <pre>{error instanceof Error ? error.message : String(error)}</pre>
+        </div>
+      );
+    }
   }
   
   return null;

@@ -33,7 +33,8 @@ const initialContextValues: AuthContextType = {
   checkSession: async () => {},
   login: async () => { throw new Error("Not implemented"); },
   register: async () => { throw new Error("Not implemented"); },
-  logout: async () => {}
+  logout: async () => {},
+  subscribe: () => {}
 };
 
 export const AuthContext = createContext<AuthContextType>(initialContextValues);
@@ -122,6 +123,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // Funcție pentru abonament
+  const subscribe = () => {
+    // Verificăm dacă utilizatorul este autentificat
+    if (!user) {
+      toast({
+        title: "Autentificare necesară",
+        description: "Trebuie să fiți autentificat pentru a vă abona",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Redirecționăm către pagina de abonament
+    const event = new CustomEvent('navigate', { detail: { path: '/subscribe' } });
+    window.dispatchEvent(event);
+  };
+
   // Verifică sesiunea la încărcarea aplicației
   useEffect(() => {
     checkSession();
@@ -144,7 +162,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         checkSession,
         login,
         register,
-        logout
+        logout,
+        subscribe
       }}
     >
       {children}
