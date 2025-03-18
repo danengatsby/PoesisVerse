@@ -211,9 +211,9 @@ const Router = () => {
         {(params) => {
           console.log("Edit poem route params:", params);
           return (
-            <ProtectedRoute path="/edit-poem/:id" component={() => (
+            <ProtectedRoute path="/edit-poem/:id">
               <AddPoem match={{ params }} />
-            )} />
+            </ProtectedRoute>
           );
         }}
       </Route>

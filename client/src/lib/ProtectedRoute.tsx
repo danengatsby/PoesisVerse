@@ -4,10 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   path: string;
-  component: React.ComponentType<{ match?: { params: Record<string, string> } }>;
+  component?: React.ComponentType<{ match?: { params: Record<string, string> } }>;
+  children?: React.ReactNode;
 }
 
-export function ProtectedRoute({ path, component: Component, children }: ProtectedRouteProps & { children?: React.ReactNode }) {
+export function ProtectedRoute({ path, component: Component, children }: ProtectedRouteProps) {
   const { path: currentPath, navigate } = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -68,7 +69,7 @@ export function ProtectedRoute({ path, component: Component, children }: Protect
     if (children) {
       return <>{children}</>; // Just pass through children if provided
     }
-    return <Component match={{ params }} />;
+    return Component ? <Component match={{ params }} /> : null;
   } catch (error) {
     console.error(`Error rendering protected component for path ${path}:`, error);
     return (
