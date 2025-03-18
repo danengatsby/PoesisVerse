@@ -122,6 +122,12 @@ export default function Header() {
                         </Link>
                       </Button>
                       <Button variant="outline" className="mr-2" asChild>
+                        <Link href="/poems-management">
+                          <FileTextIcon className="h-4 w-4 mr-1" />
+                          Poeme
+                        </Link>
+                      </Button>
+                      <Button variant="outline" className="mr-2" asChild>
                         <Link href="/subscribers">
                           <CrownIcon className="h-4 w-4 mr-1" />
                           Abonați
