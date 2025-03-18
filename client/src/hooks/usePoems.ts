@@ -112,6 +112,7 @@ export function usePoems() {
   return {
     poems,
     selectedPoem,
+    selectedPoemId,
     relatedPoems,
     bookmarkedPoems,
     isLoadingPoems,

@@ -6,13 +6,13 @@ import RelatedPoems from "@/components/RelatedPoems";
 import { usePoems } from "@/hooks/usePoems";
 
 export default function Home() {
-  const [selectedPoemId, setSelectedPoemId] = useState<number | null>(null);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const { poems, isLoadingPoems, refetchPoems } = usePoems();
+  const { poems, setSelectedPoemId, selectedPoemId, refetchPoems } = usePoems();
 
   // Inițializăm cu prima încărcare
   useEffect(() => {
     refetchPoems();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Setăm primul poem ca selectat când poemele se încarcă
@@ -20,7 +20,7 @@ export default function Home() {
     if (!selectedPoemId && poems && poems.length > 0) {
       setSelectedPoemId(poems[0].id);
     }
-  }, [poems, selectedPoemId]);
+  }, [poems, selectedPoemId, setSelectedPoemId]);
 
   return (
     <div className="flex flex-col min-h-screen bg-neutral-50">

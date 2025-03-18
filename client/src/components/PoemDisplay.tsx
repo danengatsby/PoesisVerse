@@ -11,8 +11,15 @@ interface PoemDisplayProps {
 }
 
 export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
-  const { selectedPoem, isLoadingSelectedPoem, bookmarkPoem, removeBookmark, bookmarkedPoems } = usePoems();
+  const { selectedPoem, isLoadingSelectedPoem, bookmarkPoem, removeBookmark, bookmarkedPoems, setSelectedPoemId: updateSelectedPoemId } = usePoems();
   const { isAuthenticated, isSubscribed } = useAuth();
+  
+  // Sincronizăm ID-ul poemului selectat din proprietăți cu cel din hook
+  useEffect(() => {
+    if (selectedPoemId) {
+      updateSelectedPoemId(selectedPoemId);
+    }
+  }, [selectedPoemId, updateSelectedPoemId]);
 
   const isBookmarked = bookmarkedPoems?.some((poem) => poem.id === selectedPoemId);
 
