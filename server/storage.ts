@@ -520,15 +520,17 @@ export class DatabaseStorage implements IStorage {
   async updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User> {
     try {
       // Când activăm un abonament, setăm data abonării și calculăm data expirării (1 an)
-      const updateData: Record<string, any> = { isSubscribed };
+      const updateData: Record<string, any> = { 
+        is_subscribed: isSubscribed 
+      };
       
       if (isSubscribed) {
         const currentDate = new Date();
         const endDate = new Date(currentDate);
         endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
         
-        updateData.subscribedAt = currentDate;
-        updateData.subscriptionEndDate = endDate;
+        updateData.subscribed_at = currentDate;
+        updateData.subscription_end_date = endDate;
       }
       
       const result = await this.db.update(users)
@@ -545,9 +547,9 @@ export class DatabaseStorage implements IStorage {
   async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string | null }): Promise<User> {
     try {
       const updateData: Record<string, any> = {
-        stripeCustomerId: stripeInfo.stripeCustomerId,
-        stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
-        isSubscribed: stripeInfo.stripeSubscriptionId !== null
+        stripe_customer_id: stripeInfo.stripeCustomerId,
+        stripe_subscription_id: stripeInfo.stripeSubscriptionId,
+        is_subscribed: stripeInfo.stripeSubscriptionId !== null
       };
       
       // Dacă utilizatorul este abonat, actualizăm datele de abonament
@@ -556,8 +558,8 @@ export class DatabaseStorage implements IStorage {
         const endDate = new Date(currentDate);
         endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
         
-        updateData.subscribedAt = currentDate;
-        updateData.subscriptionEndDate = endDate;
+        updateData.subscribed_at = currentDate;
+        updateData.subscription_end_date = endDate;
       }
       
       const result = await this.db.update(users)
