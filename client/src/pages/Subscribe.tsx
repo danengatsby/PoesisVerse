@@ -117,7 +117,7 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   );
 };
 
-export default function Subscribe() {
+export default function Subscribe({ match }: { match?: { params: Record<string, string> } }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<{ type: string, price: string, priceId: string } | null>(null);
