@@ -626,6 +626,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.updateUserSubscription(user.id, true);
             
             console.log(`User ${userId} subscription activated through direct payment`);
+            
+            // Trimite email de confirmare a abonamentului
+            try {
+              await sendSubscriptionEmail(user);
+            } catch (emailError) {
+              console.error('Failed to send subscription confirmation email:', emailError);
+            }
           }
           break;
           
