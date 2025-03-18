@@ -4,7 +4,7 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getAllUsers(): Map<number, User>; // Adăugat pentru debug
+  getAllUsers(): Promise<Map<number, User>>; // Adăugat pentru debug
   createUser(user: InsertUser): Promise<User>;
   updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User>;
   updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
@@ -197,7 +197,7 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
   
-  getAllUsers(): Map<number, User> {
+  async getAllUsers(): Promise<Map<number, User>> {
     return this.users;
   }
 
@@ -356,7 +356,7 @@ export class MemStorage implements IStorage {
 export class DatabaseStorage implements IStorage {
   private db: ReturnType<typeof drizzle>;
   private pool: Pool;
-  private sessionStore: ReturnType<typeof connectPgSimple>;
+  public sessionStore: ReturnType<typeof connectPgSimple>;
 
   constructor() {
     // Inițializare pool pentru PostgreSQL
@@ -479,8 +479,20 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  getAllUsers(): Map<number, User> {
-    throw new Error("Method not implemented with database storage");
+  async getAllUsers(): Promise<Map<number, User>> {
+    try {
+      const results = await this.db.select().from(users);
+      const userMap = new Map<number, User>();
+      
+      for (const user of results) {
+        userMap.set(user.id, user);
+      }
+      
+      return userMap;
+    } catch (error) {
+      console.error("Eroare la obținerea tuturor utilizatorilor:", error);
+      return new Map();
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {
