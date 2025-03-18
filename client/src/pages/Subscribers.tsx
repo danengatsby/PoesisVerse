@@ -228,7 +228,8 @@ export default function Subscribers() {
     }
   };
 
-  if (!user || !user.isAdmin) {
+  // Redirecționează dacă utilizatorul nu este administrator
+  if (!isAdmin) {
     return <Redirect to="/" />;
   }
   
