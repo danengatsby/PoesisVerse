@@ -1,98 +1,150 @@
-import { useContext } from "react";
-import { AuthContext } from "@/context/AuthContext";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  isSubscribed: boolean;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+}
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface RegisterCredentials {
+  username: string;
+  email: string;
+  password: string;
+}
+
 export function useAuth() {
-  const context = useContext(AuthContext);
   const { toast } = useToast();
 
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  // Get current user info
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["/api/users/profile"],
+    queryFn: async ({ signal }) => {
+      try {
+        const res = await fetch("/api/users/profile", { signal });
+        if (res.status === 401) {
+          return null;
+        }
+        if (!res.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+        return res.json();
+      } catch (err) {
+        console.error("Error fetching user profile:", err);
+        return null;
+      }
+    },
+  });
 
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await apiRequest("POST", "/api/login", { email, password });
-      // apiRequest aruncă excepție dacă răspunsul nu este ok
-      // Dacă ajungem aici, înseamnă că răspunsul este ok
-      
-      const userData = await response.json();
-      
-      // Actualizăm manual contextul pentru a evita întârzierea
-      await context.checkSession();
-      
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginCredentials) => {
+      const res = await apiRequest("POST", "/api/login", credentials);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Login failed");
+      }
+      return await res.json();
+    },
+    onSuccess: (userData: User) => {
+      queryClient.setQueryData(["/api/users/profile"], userData);
       toast({
-        title: "Success",
-        description: "You are now logged in.",
+        title: "Welcome back!",
+        description: "You have successfully logged in",
       });
-      return true;
-    } catch (error: any) {
+    },
+    onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to sign in",
+        title: "Login failed",
+        description: error.message,
         variant: "destructive",
       });
-      return false;
-    }
+    },
+  });
+
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: async (credentials: RegisterCredentials) => {
+      const res = await apiRequest("POST", "/api/register", credentials);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+      return await res.json();
+    },
+    onSuccess: (userData: User) => {
+      queryClient.setQueryData(["/api/users/profile"], userData);
+      toast({
+        title: "Welcome!",
+        description: "Your account has been created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/logout", {});
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Logout failed");
+      }
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/users/profile"], null);
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const login = async (email: string, password: string) => {
+    return loginMutation.mutateAsync({ email, password });
   };
 
   const register = async (username: string, email: string, password: string) => {
-    try {
-      const response = await apiRequest("POST", "/api/register", { 
-        username, 
-        email, 
-        password 
-      });
-      // apiRequest aruncă excepție dacă răspunsul nu este ok
-      // Dacă ajungem aici, înseamnă că răspunsul este ok
-      
-      const userData = await response.json();
-      
-      // Actualizăm manual contextul pentru a evita întârzierea
-      await context.checkSession();
-      
-      toast({
-        title: "Success",
-        description: "Account created successfully.",
-      });
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create account",
-        variant: "destructive",
-      });
-      return false;
-    }
+    return registerMutation.mutateAsync({ username, email, password });
   };
 
   const logout = async () => {
-    try {
-      const response = await apiRequest("POST", "/api/logout", {});
-      // apiRequest aruncă excepție dacă răspunsul nu este ok
-      // Dacă ajungem aici, înseamnă că răspunsul este ok
-      
-      // Actualizăm manual contextul pentru a evita întârzierea
-      await context.checkSession();
-      
-      toast({
-        title: "Success",
-        description: "You have been logged out.",
-      });
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to log out",
-        variant: "destructive",
-      });
-      return false;
-    }
+    return logoutMutation.mutateAsync();
   };
 
   return {
-    ...context,
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    error,
+    isSubscribed: user?.isSubscribed || false,
     login,
     register,
     logout,

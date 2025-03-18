@@ -6,6 +6,8 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Subscribe from "@/pages/Subscribe";
 import { AuthProvider } from "./context/AuthContext";
+import AuthPage from "@/pages/auth-page";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Importăm noul component
 import AddPoem from "@/pages/AddPoem";
@@ -14,8 +16,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/subscribe" component={Subscribe} />
-      <Route path="/add-poem" component={AddPoem} />
+      <Route path="/auth" component={AuthPage} />
+      <ProtectedRoute path="/subscribe" component={Subscribe} />
+      <ProtectedRoute path="/add-poem" component={AddPoem} />
       <Route component={NotFound} />
     </Switch>
   );
