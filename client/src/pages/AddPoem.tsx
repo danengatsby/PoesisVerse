@@ -350,11 +350,11 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
                 <FormItem>
                   <FormLabel>URL Imagine</FormLabel>
                   <div className="flex gap-2">
-                    <FormControl>
+                    <FormControl className="flex-1">
                       <Input placeholder="https://example.com/image.jpg" {...field} />
                     </FormControl>
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      <div className="px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                    <label htmlFor="image-upload" className="cursor-pointer inline-block min-w-[80px]">
+                      <div className="px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center h-full">
                         Încarcă
                       </div>
                       <input
@@ -391,11 +391,11 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
                 <FormItem>
                   <FormLabel>Fișier Audio</FormLabel>
                   <div className="flex gap-2">
-                    <FormControl>
+                    <FormControl className="flex-1">
                       <Input placeholder="https://example.com/audio.mp3" {...field} />
                     </FormControl>
-                    <label htmlFor="audio-upload" className="cursor-pointer">
-                      <div className="px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                    <label htmlFor="audio-upload" className="cursor-pointer inline-block min-w-[80px]">
+                      <div className="px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center h-full">
                         Încarcă
                       </div>
                       <input
