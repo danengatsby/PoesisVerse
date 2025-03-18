@@ -195,8 +195,10 @@ export function useAuth() {
       return;
     }
     
-    // Redirect to subscription page using window.location - simple approach
-    window.location.href = '/subscribe';
+    // Since this hook doesn't have access to the navigate function directly,
+    // we'll just use the link as an event - the component should handle routing
+    const event = new CustomEvent('navigate', { detail: { path: '/subscribe' } });
+    window.dispatchEvent(event);
   };
   
   // Refresh subscription status
