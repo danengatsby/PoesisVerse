@@ -9,6 +9,7 @@ interface Subscriber {
   id: number;
   username: string;
   email: string;
+  isSubscribed: boolean;
   subscriptionType: string;
   subscribedAt: string | null;
   subscriptionEndDate: string | null;
@@ -76,7 +77,7 @@ export default function Subscribers() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Lista abonaților</h1>
+      <h1 className="text-2xl font-bold mb-6">Lista utilizatorilor</h1>
 
       {isLoading ? (
         <div className="flex justify-center items-center h-40">
@@ -88,7 +89,7 @@ export default function Subscribers() {
         </div>
       ) : subscribers.length === 0 ? (
         <div className="bg-amber-50 p-4 rounded-md text-amber-700 border border-amber-200">
-          Nu există utilizatori abonați momentan.
+          Nu există utilizatori înregistrați momentan.
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -98,6 +99,7 @@ export default function Subscribers() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nume utilizator</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tip abonament</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data abonării</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data expirării</th>
@@ -109,6 +111,15 @@ export default function Subscribers() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{subscriber.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{subscriber.username}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">{subscriber.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      subscriber.isSubscribed 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {subscriber.isSubscribed ? 'Abonat' : 'Neabonat'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       subscriber.subscriptionType === 'anual' 
