@@ -54,15 +54,22 @@ export default function Header() {
             <div className="hidden md:flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
-                  <div className="flex items-center">
-                    <span className="text-sm text-neutral-600 mr-2">
-                      Bine ai venit, {user?.username}
-                    </span>
+                  <div className="flex flex-col">
+                    <div className="flex items-center">
+                      <span className="text-sm text-neutral-600 mr-2">
+                        Bine ai venit, {user?.username}
+                      </span>
+                      {isSubscribed && (
+                        <Badge className="bg-amber-500" variant="secondary">
+                          <CrownIcon className="h-3 w-3 mr-1" />
+                          Premium
+                        </Badge>
+                      )}
+                    </div>
                     {isSubscribed && (
-                      <Badge className="bg-amber-500" variant="secondary">
-                        <CrownIcon className="h-3 w-3 mr-1" />
-                        Premium
-                      </Badge>
+                      <span className="text-xs text-emerald-600 font-medium">
+                        Abonat • Acces complet la toate poemele
+                      </span>
                     )}
                   </div>
                   
@@ -115,13 +122,20 @@ export default function Header() {
             <div className="px-4 space-y-2">
               {isAuthenticated ? (
                 <>
-                  <div className="px-4 py-2 text-sm text-neutral-600 flex items-center">
-                    <span className="mr-2">Cont: {user?.username}</span>
+                  <div className="px-4 py-2 text-sm">
+                    <div className="flex items-center text-neutral-600">
+                      <span className="mr-2">Cont: {user?.username}</span>
+                      {isSubscribed && (
+                        <Badge className="bg-amber-500" variant="secondary">
+                          <CrownIcon className="h-3 w-3 mr-1" />
+                          Premium
+                        </Badge>
+                      )}
+                    </div>
                     {isSubscribed && (
-                      <Badge className="bg-amber-500" variant="secondary">
-                        <CrownIcon className="h-3 w-3 mr-1" />
-                        Premium
-                      </Badge>
+                      <span className="text-xs text-emerald-600 font-medium mt-1 block">
+                        Abonat • Acces complet la toate poemele
+                      </span>
                     )}
                   </div>
                   

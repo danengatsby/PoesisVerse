@@ -205,11 +205,12 @@ export default function StripePaymentForm({
     );
   }
   
+  // Definim opțiunile cu tipurile corecte pentru Stripe Elements
   const options = {
     clientSecret,
     appearance: {
-      theme: 'stripe',
-      labels: 'floating',
+      theme: 'stripe' as 'stripe' | 'night' | 'flat',
+      labels: 'floating' as 'floating' | 'above',
     },
   };
 
