@@ -24,6 +24,7 @@ export const poems = pgTable("poems", {
   year: text("year"),
   category: text("category"),
   isPremium: boolean("is_premium").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const userPoems = pgTable("user_poems", {

@@ -25,9 +25,12 @@ export interface IStorage {
   removeBookmark(userId: number, poemId: number): Promise<void>;
 }
 
-// Import NodeJS file system module - not used in this implementation but kept for future reference
-// import * as fs from 'fs';
-// import * as path from 'path';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { eq, and, desc, lt, gte, ne, sql, asc, count, ilike } from 'drizzle-orm';
+import pg from 'pg';
+const { Pool } = pg;
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
@@ -92,7 +95,8 @@ export class MemStorage implements IStorage {
         description: "Written in 1875 and published in 1888, \"Invictus\" is a powerful poem that speaks to the indomitable spirit of human perseverance.",
         year: "1888",
         category: "Classic Poetry",
-        isPremium: false
+        isPremium: false,
+        createdAt: new Date()
       },
       {
         title: "The Road Not Taken",
@@ -173,10 +177,14 @@ export class MemStorage implements IStorage {
       }
     ];
     
-    // Add poems to storage
+    // Add poems to storage and make sure they all have createdAt
     samplePoems.forEach(poem => {
       const id = this.poemIdCounter++;
-      this.poems.set(id, { ...poem, id });
+      this.poems.set(id, { 
+        ...poem, 
+        id,
+        createdAt: poem.createdAt || new Date() 
+      });
     });
   }
 
@@ -344,4 +352,365 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Implementare pentru baza de date PostgreSQL
+export class DatabaseStorage implements IStorage {
+  private db: ReturnType<typeof drizzle>;
+  private pool: Pool;
+  private sessionStore: ReturnType<typeof connectPgSimple>;
+
+  constructor() {
+    // Inițializare pool pentru PostgreSQL
+    this.pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+
+    // Inițializare drizzle ORM
+    this.db = drizzle(this.pool);
+
+    // Inițializare session store pentru PostgreSQL
+    const PgSession = connectPgSimple(session);
+    this.sessionStore = new PgSession({
+      pool: this.pool,
+      createTableIfMissing: true
+    });
+
+    this.initializeDatabase();
+  }
+
+  // Inițializare bază de date
+  private async initializeDatabase() {
+    try {
+      console.log("Inițializare bază de date PostgreSQL...");
+      
+      // Verifică dacă tabelele există și creează-le dacă nu
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          username TEXT NOT NULL UNIQUE,
+          email TEXT NOT NULL UNIQUE,
+          password TEXT,
+          is_subscribed BOOLEAN DEFAULT FALSE,
+          stripe_customer_id TEXT,
+          stripe_subscription_id TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+        
+        CREATE TABLE IF NOT EXISTS poems (
+          id SERIAL PRIMARY KEY,
+          title TEXT NOT NULL,
+          content TEXT NOT NULL,
+          author TEXT NOT NULL,
+          image_url TEXT,
+          thumbnail_url TEXT,
+          description TEXT,
+          year TEXT,
+          category TEXT,
+          is_premium BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+        
+        CREATE TABLE IF NOT EXISTS user_poems (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id),
+          poem_id INTEGER REFERENCES poems(id),
+          is_bookmarked BOOLEAN DEFAULT FALSE
+        );
+      `);
+
+      // După creare, verifică dacă există înregistrări în tabelul de poezii
+      const { rows: poemCount } = await this.pool.query('SELECT COUNT(*) FROM poems');
+      
+      // Dacă nu există poezii, inițializează datele
+      if (parseInt(poemCount[0].count) === 0) {
+        console.log("Nu există poezii, se inițializează date de pornire...");
+        await this.initializeData();
+      } else {
+        console.log(`Există ${poemCount[0].count} poezii în baza de date.`);
+      }
+    } catch (error) {
+      console.error("Eroare la inițializarea bazei de date:", error);
+    }
+  }
+
+  // Inițializare date de test
+  private async initializeData() {
+    try {
+      // Utilizatori de test
+      await this.pool.query(`
+        INSERT INTO users (username, email, password, is_subscribed)
+        VALUES 
+          ('test', 'test@example.com', '$2a$10$9Xn39AyVI7wPGUGc5RIAQuTKDVzLDOJMXR4kHP1jQUFJbmvfkM/nG', false),
+          ('poet', 'danen53@gmail.com', '$2a$10$9Xn39AyVI7wPGUGc5RIAQuTKDVzLDOJMXR4kHP1jQUFJbmvfkM/nG', false)
+      `);
+
+      // Poezii de test
+      await this.pool.query(`
+        INSERT INTO poems (title, content, author, image_url, thumbnail_url, description, year, category, is_premium)
+        VALUES 
+          ('Invictus', 'Out of the night that covers me,\nBlack as the pit from pole to pole,\nI thank whatever gods may be\nFor my unconquerable soul.\n\nIn the fell clutch of circumstance\nI have not winced nor cried aloud.\nUnder the bludgeonings of chance\nMy head is bloody, but unbowed.\n\nBeyond this place of wrath and tears\nLooms but the Horror of the shade,\nAnd yet the menace of the years\nFinds and shall find me unafraid.\n\nIt matters not how strait the gate,\nHow charged with punishments the scroll,\nI am the master of my fate,\nI am the captain of my soul.', 'William Ernest Henley', 'https://images.unsplash.com/photo-1558786083-0fe8d4af66ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80', 'https://images.unsplash.com/photo-1558786083-0fe8d4af66ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80', 'Written in 1875 and published in 1888, \"Invictus\" is a powerful poem that speaks to the indomitable spirit of human perseverance.', '1888', 'Classic Poetry', false),
+          
+          ('The Road Not Taken', 'Two roads diverged in a yellow wood,\nAnd sorry I could not travel both\nAnd be one traveler, long I stood\nAnd looked down one as far as I could\nTo where it bent in the undergrowth;\n\nThen took the other, as just as fair,\nAnd having perhaps the better claim,\nBecause it was grassy and wanted wear;\nThough as for that the passing there\nHad worn them really about the same,\n\nAnd both that morning equally lay\nIn leaves no step had trodden black.\nOh, I kept the first for another day!\nYet knowing how way leads on to way,\nI doubted if I should ever come back.\n\nI shall be telling this with a sigh\nSomewhere ages and ages hence:\nTwo roads diverged in a wood, and I—\nI took the one less traveled by,\nAnd that has made all the difference.', 'Robert Frost', 'https://images.unsplash.com/photo-1480497490787-505ec076689f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80', 'https://images.unsplash.com/photo-1480497490787-505ec076689f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80', 'Published in 1916, this poem uses a road as a metaphor for the journey of life.', '1916', 'Classic Poetry', false)
+      `);
+
+      console.log("Date de test inițializate cu succes.");
+    } catch (error) {
+      console.error("Eroare la inițializarea datelor de test:", error);
+    }
+  }
+
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    try {
+      const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la obținerea utilizatorului:", error);
+      return undefined;
+    }
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    try {
+      const result = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la obținerea utilizatorului după email:", error);
+      return undefined;
+    }
+  }
+
+  getAllUsers(): Map<number, User> {
+    throw new Error("Method not implemented with database storage");
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    try {
+      const result = await this.db.insert(users).values({
+        ...user,
+        isSubscribed: false,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null
+      }).returning();
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la crearea utilizatorului:", error);
+      throw error;
+    }
+  }
+
+  async updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User> {
+    try {
+      const result = await this.db.update(users)
+        .set({ isSubscribed })
+        .where(eq(users.id, userId))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la actualizarea abonamentului utilizatorului:", error);
+      throw error;
+    }
+  }
+
+  async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User> {
+    try {
+      const result = await this.db.update(users)
+        .set({ 
+          stripeCustomerId: stripeInfo.stripeCustomerId,
+          stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
+          isSubscribed: true
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la actualizarea informațiilor Stripe ale utilizatorului:", error);
+      throw error;
+    }
+  }
+
+  // Poem operations
+  async getAllPoems(): Promise<Poem[]> {
+    try {
+      return await this.db.select().from(poems);
+    } catch (error) {
+      console.error("Eroare la obținerea tuturor poemelor:", error);
+      return [];
+    }
+  }
+
+  async getPremiumPoems(): Promise<Poem[]> {
+    try {
+      return await this.db.select().from(poems).where(eq(poems.isPremium, true));
+    } catch (error) {
+      console.error("Eroare la obținerea poemelor premium:", error);
+      return [];
+    }
+  }
+
+  async getFreePoems(): Promise<Poem[]> {
+    try {
+      return await this.db.select().from(poems).where(eq(poems.isPremium, false));
+    } catch (error) {
+      console.error("Eroare la obținerea poemelor gratuite:", error);
+      return [];
+    }
+  }
+
+  async getRecentlyAddedPoems(): Promise<Poem[]> {
+    try {
+      return await this.db.select().from(poems).orderBy(desc(poems.createdAt)).limit(5);
+    } catch (error) {
+      console.error("Eroare la obținerea poemelor recent adăugate:", error);
+      return [];
+    }
+  }
+
+  async getPoemById(id: number): Promise<Poem | undefined> {
+    try {
+      if (!id) return undefined;
+      const result = await this.db.select().from(poems).where(eq(poems.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la obținerea poemului după ID:", error);
+      return undefined;
+    }
+  }
+
+  async getPoemByTitle(title: string): Promise<Poem | undefined> {
+    try {
+      const result = await this.db.select().from(poems)
+        .where(ilike(poems.title, title))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la obținerea poemului după titlu:", error);
+      return undefined;
+    }
+  }
+
+  async createPoem(poem: Poem): Promise<Poem> {
+    try {
+      const result = await this.db.insert(poems).values({
+        title: poem.title,
+        content: poem.content,
+        author: poem.author,
+        imageUrl: poem.imageUrl,
+        thumbnailUrl: poem.thumbnailUrl,
+        description: poem.description,
+        year: poem.year,
+        category: poem.category,
+        isPremium: poem.isPremium,
+        createdAt: new Date()
+      }).returning();
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la crearea poemului:", error);
+      throw error;
+    }
+  }
+
+  async getRelatedPoems(poemId: number, limit: number = 2): Promise<Poem[]> {
+    try {
+      // Obține poemul curent
+      const poem = await this.getPoemById(poemId);
+      if (!poem) return [];
+
+      // Caută poeme cu același autor sau categorie
+      const relatedPoems = await this.db.select().from(poems)
+        .where(
+          and(
+            ne(poems.id, poemId),
+            sql`(${poems.author} = ${poem.author} OR ${poems.category} = ${poem.category})`
+          )
+        )
+        .limit(limit);
+      
+      return relatedPoems;
+    } catch (error) {
+      console.error("Eroare la obținerea poemelor conexe:", error);
+      return [];
+    }
+  }
+
+  // User-Poem interactions
+  async bookmarkPoem(userId: number, poemId: number): Promise<UserPoem> {
+    try {
+      // Verifică dacă există deja un bookmark
+      const existingBookmark = await this.db.select().from(userPoems)
+        .where(
+          and(
+            eq(userPoems.userId, userId),
+            eq(userPoems.poemId, poemId)
+          )
+        )
+        .limit(1);
+
+      if (existingBookmark.length > 0) {
+        // Actualizează bookmark-ul existent
+        const result = await this.db.update(userPoems)
+          .set({ isBookmarked: true })
+          .where(
+            and(
+              eq(userPoems.userId, userId),
+              eq(userPoems.poemId, poemId)
+            )
+          )
+          .returning();
+        return result[0];
+      } else {
+        // Creează un nou bookmark
+        const result = await this.db.insert(userPoems).values({
+          userId,
+          poemId,
+          isBookmarked: true
+        }).returning();
+        return result[0];
+      }
+    } catch (error) {
+      console.error("Eroare la adăugarea bookmarku-lui:", error);
+      throw error;
+    }
+  }
+
+  async getUserBookmarks(userId: number): Promise<Poem[]> {
+    try {
+      // Obține bookmarks-urile utilizatorului și join cu poemele
+      const result = await this.db
+        .select({
+          poem: poems
+        })
+        .from(userPoems)
+        .innerJoin(poems, eq(userPoems.poemId, poems.id))
+        .where(
+          and(
+            eq(userPoems.userId, userId),
+            eq(userPoems.isBookmarked, true)
+          )
+        );
+
+      return result.map(r => r.poem);
+    } catch (error) {
+      console.error("Eroare la obținerea bookmark-urilor utilizatorului:", error);
+      return [];
+    }
+  }
+
+  async removeBookmark(userId: number, poemId: number): Promise<void> {
+    try {
+      await this.db.update(userPoems)
+        .set({ isBookmarked: false })
+        .where(
+          and(
+            eq(userPoems.userId, userId),
+            eq(userPoems.poemId, poemId)
+          )
+        );
+    } catch (error) {
+      console.error("Eroare la eliminarea bookmark-ului:", error);
+      throw error;
+    }
+  }
+}
+
+// Exportă instanța de storage
+export const storage = new DatabaseStorage();

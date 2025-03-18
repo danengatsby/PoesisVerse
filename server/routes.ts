@@ -132,13 +132,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Poem with this title already exists' });
       }
       
-      // Create new poem with null pentru campurile opționale
+      // Create new poem with null pentru campurile opționale și adăugăm createdAt
       const newPoem = await storage.createPoem({
         ...parsedData.data,
         id: 0, // Will be set by storage
         description: parsedData.data.description || null,
         year: parsedData.data.year || null,
-        category: parsedData.data.category || null
+        category: parsedData.data.category || null,
+        createdAt: new Date()
       });
       
       return res.status(201).json(newPoem);
