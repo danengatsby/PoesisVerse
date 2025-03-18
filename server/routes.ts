@@ -633,6 +633,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get subscribers list (admin only)
+  app.get("/api/admin/subscribers", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user;
+      
+      // Verifică dacă utilizatorul este Administrator
+      if (currentUser.username !== "Administrator") {
+        return res.status(403).json({ message: "Acces interzis. Numai administratorii pot accesa această resursă." });
+      }
+      
+      // Obține toți utilizatorii
+      const allUsers = await storage.getAllUsers();
+      // Conversia Map în Array și filtrează doar utilizatorii abonați
+      const subscribers = Array.from(allUsers.values())
+        .filter(user => user.is_subscribed)
+        .map(user => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          subscriptionType: user.subscription_end_date && user.subscribed_at ? 
+            (new Date(user.subscription_end_date).getTime() - new Date(user.subscribed_at).getTime() > 31 * 24 * 60 * 60 * 1000 ? 
+              'anual' : 'lunar') : 'nedeterminat',
+          subscribedAt: user.subscribed_at,
+          subscriptionEndDate: user.subscription_end_date
+        }));
+      
+      return res.status(200).json(subscribers);
+    } catch (error) {
+      console.error("Error retrieving subscribers:", error);
+      return res.status(500).json({ message: "Failed to retrieve subscribers" });
+    }
+  });
+  
   // Test email endpoint (requires authentication)
   app.post("/api/test-email", isAuthenticated, async (req: Request, res: Response) => {
     try {

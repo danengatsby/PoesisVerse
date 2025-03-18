@@ -113,12 +113,22 @@ export default function Header() {
                     )}
                   </div>
                   
-                  <Button variant="outline" className="mr-2" asChild>
-                    <Link href="/add-poem">
-                      <PlusCircleIcon className="h-4 w-4 mr-1" />
-                      Adăugare poem
-                    </Link>
-                  </Button>
+                  {user?.username === "Administrator" && (
+                    <>
+                      <Button variant="outline" className="mr-2" asChild>
+                        <Link href="/add-poem">
+                          <PlusCircleIcon className="h-4 w-4 mr-1" />
+                          Adăugare poem
+                        </Link>
+                      </Button>
+                      <Button variant="outline" className="mr-2" asChild>
+                        <Link href="/subscribers">
+                          <CrownIcon className="h-4 w-4 mr-1" />
+                          Abonați
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                   
                   {!isSubscribed && (
                     <Button variant="default" className="mr-2 bg-amber-500 hover:bg-amber-600" onClick={navigateToSubscribe}>
@@ -194,12 +204,22 @@ export default function Header() {
                     )}
                   </div>
                   
-                  <Link href="/add-poem" className="block w-full">
-                    <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
-                      <PlusCircleIcon className="h-4 w-4 mr-2" />
-                      Adăugare poem
-                    </div>
-                  </Link>
+                  {user?.username === "Administrator" && (
+                    <>
+                      <Link href="/add-poem" className="block w-full">
+                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                          <PlusCircleIcon className="h-4 w-4 mr-2" />
+                          Adăugare poem
+                        </div>
+                      </Link>
+                      <Link href="/subscribers" className="block w-full">
+                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                          <CrownIcon className="h-4 w-4 mr-2" />
+                          Abonați
+                        </div>
+                      </Link>
+                    </>
+                  )}
                   
                   {!isSubscribed && (
                     <button 

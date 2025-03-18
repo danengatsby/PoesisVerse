@@ -10,6 +10,7 @@ import AuthPage from '@/pages/auth-page';
 import NotFound from '@/pages/not-found';
 import Subscribe from '@/pages/Subscribe';
 import AddPoem from '@/pages/AddPoem';
+import Subscribers from '@/pages/Subscribers';
 import { useAuth } from '@/hooks/useAuth';
 
 // Import wouter components
@@ -66,6 +67,7 @@ class ErrorBoundary extends React.Component<
 // Navigation component
 const Navigation = () => {
   const auth = useAuth();
+  const isAdmin = auth.user?.username === "Administrator";
   
   return (
     <nav className="bg-gray-800 text-white p-4">
@@ -76,7 +78,12 @@ const Navigation = () => {
             <Link href="/" className="hover:text-gray-300">Home</Link>
             {auth.isAuthenticated && (
               <>
-                <Link href="/add-poem" className="hover:text-gray-300">Add Poem</Link>
+                {isAdmin && (
+                  <Link href="/add-poem" className="hover:text-gray-300">Add Poem</Link>
+                )}
+                {isAdmin && (
+                  <Link href="/subscribers" className="hover:text-gray-300">Subscribers</Link>
+                )}
                 {!auth.isSubscribed && (
                   <Link href="/subscribe" className="hover:text-gray-300">Subscribe</Link>
                 )}
