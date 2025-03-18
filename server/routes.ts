@@ -95,7 +95,16 @@ async function sendWelcomeEmail(user: User): Promise<void> {
 }
 
 // Funcție pentru email de confirmare a abonamentului
-async function sendSubscriptionEmail(user: User, planType: 'monthly' | 'annual' = 'monthly'): Promise<void> {
+async function sendSubscriptionEmail(
+  user: User, 
+  planType: 'monthly' | 'annual' = 'monthly',
+  invoiceDetails?: {
+    invoiceId: string;
+    paymentDate: string;
+    paymentMethod?: string;
+    cardLast4?: string;
+  }
+): Promise<void> {
   console.log(`Trimitere email de confirmare abonament ${planType} pentru:`, user.email);
   
   // Informații specifice tipului de abonament
@@ -103,7 +112,9 @@ async function sendSubscriptionEmail(user: User, planType: 'monthly' | 'annual' 
     title: 'Abonament Lunar Premium',
     price: '$5.99/lună',
     renewalInfo: 'Abonamentul tău se va reînnoi automat la fiecare lună.',
-    duration: 'o lună'
+    duration: 'o lună',
+    amount: 5.99,
+    currency: 'USD'
   };
   
   if (planType === 'annual') {
@@ -111,9 +122,17 @@ async function sendSubscriptionEmail(user: User, planType: 'monthly' | 'annual' 
       title: 'Abonament Anual Premium',
       price: '$49.99/an',
       renewalInfo: 'Abonamentul tău se va reînnoi automat în fiecare an.',
-      duration: 'un an'
+      duration: 'un an',
+      amount: 49.99,
+      currency: 'USD'
     };
   }
+  
+  // Data pentru factură
+  const paymentDate = invoiceDetails?.paymentDate || new Date().toLocaleDateString();
+  const invoiceId = invoiceDetails?.invoiceId || `INV-${Date.now().toString().slice(-8)}`;
+  const paymentMethod = invoiceDetails?.paymentMethod || 'Card';
+  const cardDetails = invoiceDetails?.cardLast4 ? `**** **** **** ${invoiceDetails.cardLast4}` : 'Card procesat prin Stripe';
   
   // Template email pentru utilizator nou abonat
   const mailOptions = {
@@ -143,12 +162,54 @@ async function sendSubscriptionEmail(user: User, planType: 'monthly' | 'annual' 
           </ul>
         </div>
         
+        <!-- Adăugăm secțiunea de factură -->
+        <div style="border: 1px solid #e0e0e0; border-radius: 5px; margin-bottom: 20px; overflow: hidden;">
+          <div style="background-color: #1f2937; color: white; padding: 15px; text-align: center;">
+            <h3 style="margin: 0; font-size: 18px;">FACTURĂ</h3>
+          </div>
+          
+          <div style="padding: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+              <div>
+                <p style="color: #6b7280; margin: 0; font-size: 14px;">Către:</p>
+                <p style="color: #1f2937; margin: 5px 0 0; font-size: 16px;"><strong>${user.username}</strong></p>
+                <p style="color: #4b5563; margin: 2px 0 0; font-size: 14px;">${user.email}</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="color: #6b7280; margin: 0; font-size: 14px;">Factură #:</p>
+                <p style="color: #1f2937; margin: 5px 0 0; font-size: 16px;"><strong>${invoiceId}</strong></p>
+                <p style="color: #4b5563; margin: 2px 0 0; font-size: 14px;">Data: ${paymentDate}</p>
+              </div>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+              <tr style="background-color: #f3f4f6;">
+                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0;">Descriere</th>
+                <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e0e0e0;">Preț</th>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e0e0e0;">${planInfo.title}</td>
+                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e0e0e0;">${planInfo.price}</td>
+              </tr>
+              <tr style="background-color: #f8fafc;">
+                <td style="padding: 10px; text-align: right;"><strong>Total</strong></td>
+                <td style="padding: 10px; text-align: right;"><strong>${planInfo.price}</strong></td>
+              </tr>
+            </table>
+            
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px;">
+              <p style="margin: 0; color: #4b5563; font-size: 14px;"><strong>Metodă de plată:</strong> ${paymentMethod}</p>
+              <p style="margin: 5px 0 0; color: #4b5563; font-size: 14px;"><strong>Detalii card:</strong> ${cardDetails}</p>
+            </div>
+          </div>
+        </div>
+        
         <div style="background-color: #f8fafc; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
           <h3 style="color: #1f2937; margin-top: 0;">Detalii abonament</h3>
           <p style="color: #4b5563; font-size: 16px;">
             <strong>Tip abonament:</strong> ${planInfo.title}<br>
             <strong>Preț:</strong> ${planInfo.price}<br>
-            <strong>Dată activare:</strong> ${new Date().toLocaleDateString()}<br>
+            <strong>Dată activare:</strong> ${paymentDate}<br>
             <strong>Status:</strong> Activ
           </p>
           <p style="color: #4b5563; font-size: 16px;">${planInfo.renewalInfo}</p>
