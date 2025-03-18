@@ -8,7 +8,7 @@ import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "@/lib/SimpleRouter";
 import { useAuth } from "@/hooks/useAuth";
 
 // Load Stripe outside of component render for better performance
@@ -200,11 +200,9 @@ export default function Subscribe() {
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
-            <Link href="/">
-              <a className="text-neutral-600 hover:text-primary flex items-center">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to poems
-              </a>
+            <Link href="/" className="text-neutral-600 hover:text-primary flex items-center">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to poems
             </Link>
           </div>
           

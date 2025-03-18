@@ -1,21 +1,20 @@
-import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import { useRouter } from "@/lib/SimpleRouter";
 import { useAuth } from "@/hooks/useAuth";
 import LoginModal from "@/components/auth/LoginModal";
 import SignupModal from "@/components/auth/SignupModal";
-import { useState } from "react";
 
 export default function AuthPage() {
-  const [location, navigate] = useLocation();
+  const { navigateTo } = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(true);
 
   // Redirect to home if already authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      navigate("/");
+      navigateTo("/");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigateTo]);
 
   if (isLoading) {
     return (
