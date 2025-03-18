@@ -235,6 +235,7 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
             
             if (poemData.audioUrl) {
               setAudioName("Fisier audio existent");
+              console.log("Audio URL încărcat din server:", poemData.audioUrl.substring(0, 50) + "...");
             }
           } else {
             toast({
@@ -273,12 +274,19 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
 
     setIsPending(true);
     try {
+      console.log("Valori de trimis la server:", { 
+        titlu: values.title,
+        autor: values.author,
+        audioUrl_length: values.audioUrl?.length || 0,
+        imageUrl_length: values.imageUrl?.length || 0
+      });
+      
       // Dacă nu avem URL-uri pentru imagini, dar avem preview-uri, le folosim
       const dataToSend = {
         ...values,
         // Dacă există preview, asigură-te că este trimis corespunzător
         imageUrl: values.imageUrl || imagePreview || "",
-        audioUrl: values.audioUrl || "",
+        audioUrl: values.audioUrl || "", // Păstrăm audioUrl dacă există
       };
       
       let response;
