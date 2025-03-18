@@ -91,6 +91,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get recently added poems
+  app.get("/api/recent-poems", async (_req, res) => {
+    try {
+      const recentPoems = await storage.getRecentlyAddedPoems();
+      return res.status(200).json(recentPoems);
+    } catch (error) {
+      console.error('Error fetching recent poems:', error);
+      return res.status(500).json({ message: 'Failed to fetch recent poems' });
+    }
+  });
+  
+  
   // Add a new poem (requires authentication)
   app.post("/api/poems", isAuthenticated, async (req: Request, res: Response) => {
     try {
