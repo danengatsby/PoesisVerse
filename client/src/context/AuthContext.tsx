@@ -7,9 +7,9 @@ interface User {
   id: number;
   username: string;
   email: string;
-  isSubscribed: boolean;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
+  is_subscribed: boolean;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
 }
 
 interface AuthContextType {
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Dacă ajungem aici, înseamnă că request-ul a fost reușit (nu s-a aruncat excepție)
       const userData = await response.json();
       setUser(userData);
-      setIsSubscribed(userData.isSubscribed);
+      setIsSubscribed(userData.is_subscribed);
       setIsLoading(false);
     } catch (error) {
       // Gestionăm erorile silențios pentru verificarea sesiunii
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const response = await apiRequest("POST", "/api/login", { email, password });
       const userData = await response.json();
       setUser(userData);
-      setIsSubscribed(userData.isSubscribed);
+      setIsSubscribed(userData.is_subscribed);
       return userData;
     } catch (error: any) {
       toast({
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const response = await apiRequest("POST", "/api/register", { username, email, password });
       const userData = await response.json();
       setUser(userData);
-      setIsSubscribed(userData.isSubscribed);
+      setIsSubscribed(userData.is_subscribed);
       return userData;
     } catch (error: any) {
       toast({
