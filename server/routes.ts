@@ -338,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category: z.string().min(1),
         isPremium: z.boolean().default(false),
         imageUrl: z.string().url(),
-        thumbnailUrl: z.string().url(),
+        audioUrl: z.string().url().optional(),
       });
       
       const parsedData = poemSchema.safeParse(req.body);
@@ -362,6 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: parsedData.data.description || null,
         year: parsedData.data.year || null,
         category: parsedData.data.category || null,
+        audioUrl: parsedData.data.audioUrl || null,
         createdAt: new Date()
       });
       
@@ -402,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category: z.string().optional(),
         isPremium: z.boolean(),
         imageUrl: z.string().url().optional(),
-        thumbnailUrl: z.string().url().optional(),
+        audioUrl: z.string().url().optional(),
       });
       
       const parsedData = poemSchema.safeParse(req.body);
@@ -426,6 +427,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: parsedData.data.description || null,
         year: parsedData.data.year || null,
         category: parsedData.data.category || null,
+        imageUrl: parsedData.data.imageUrl || null,
+        audioUrl: parsedData.data.audioUrl || null,
+        createdAt: existingPoem.createdAt,
       });
       
       return res.status(200).json(updatedPoem);
