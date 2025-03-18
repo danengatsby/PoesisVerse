@@ -31,7 +31,7 @@ interface NewPoemFormData {
   content: string;
   author: string;
   imageUrl: string;
-  thumbnailUrl: string;
+  audioUrl: string;
   description: string;
   year: string;
   category: string;
@@ -54,7 +54,7 @@ export default function PoemManagement() {
     content: '',
     author: '',
     imageUrl: '',
-    thumbnailUrl: '',
+    audioUrl: '',
     description: '',
     year: '',
     category: '',
@@ -65,7 +65,7 @@ export default function PoemManagement() {
     content: '',
     author: '',
     imageUrl: '',
-    thumbnailUrl: '',
+    audioUrl: '',
     description: '',
     year: '',
     category: '',
@@ -154,7 +154,7 @@ export default function PoemManagement() {
           content: '',
           author: '',
           imageUrl: '',
-          thumbnailUrl: '',
+          audioUrl: '',
           description: '',
           year: '',
           category: '',
@@ -187,7 +187,7 @@ export default function PoemManagement() {
       content: poem.content,
       author: poem.author,
       imageUrl: poem.imageUrl || '',
-      thumbnailUrl: poem.thumbnailUrl || '',
+      audioUrl: poem.audioUrl || '',
       description: poem.description || '',
       year: poem.year || '',
       category: poem.category || '',
@@ -486,14 +486,14 @@ export default function PoemManagement() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="thumbnailUrl" className="text-right">
-                URL Miniatură
+              <Label htmlFor="audioUrl" className="text-right">
+                URL Fișier Audio
               </Label>
               <Input
-                id="thumbnailUrl"
-                value={newPoem.thumbnailUrl}
-                onChange={(e) => setNewPoem({ ...newPoem, thumbnailUrl: e.target.value })}
-                placeholder="https://example.com/thumbnail.jpg"
+                id="audioUrl"
+                value={newPoem.audioUrl}
+                onChange={(e) => setNewPoem({ ...newPoem, audioUrl: e.target.value })}
+                placeholder="https://example.com/poem-audio.mp3"
                 className="col-span-3"
               />
             </div>
@@ -616,14 +616,14 @@ export default function PoemManagement() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-thumbnailUrl" className="text-right">
-                URL Miniatură
+              <Label htmlFor="edit-audioUrl" className="text-right">
+                URL Fișier Audio
               </Label>
               <Input
-                id="edit-thumbnailUrl"
-                value={editPoem.thumbnailUrl}
-                onChange={(e) => setEditPoem({ ...editPoem, thumbnailUrl: e.target.value })}
-                placeholder="https://example.com/thumbnail.jpg"
+                id="edit-audioUrl"
+                value={editPoem.audioUrl}
+                onChange={(e) => setEditPoem({ ...editPoem, audioUrl: e.target.value })}
+                placeholder="https://example.com/poem-audio.mp3"
                 className="col-span-3"
               />
             </div>

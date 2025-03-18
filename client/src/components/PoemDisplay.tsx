@@ -12,7 +12,7 @@ interface Poem {
   content: string;
   author: string;
   imageUrl: string;
-  thumbnailUrl: string;
+  audioUrl: string;
   description?: string;
   year?: string;
   category?: string;
@@ -244,6 +244,18 @@ export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
                 </div>
                 
                 <div className="flex space-x-2">
+                  {selectedPoem.audioUrl && (
+                    <div className="mr-4">
+                      <audio 
+                        controls 
+                        src={selectedPoem.audioUrl}
+                        className="max-w-[200px] h-8"
+                      >
+                        Browserul dvs. nu suportă redarea audio.
+                      </audio>
+                    </div>
+                  )}
+
                   <button
                     className="p-2 text-neutral-600 hover:text-primary transition-colors"
                     aria-label="Share poem"
