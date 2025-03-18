@@ -1,19 +1,60 @@
-import { usePoems, type Poem } from "@/hooks/usePoems";
+import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest } from "@/lib/queryClient";
 
 interface RelatedPoemsProps {
   selectedPoemId: number | null;
   onPoemSelect: (id: number) => void;
 }
 
+interface Poem {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  imageUrl: string;
+  thumbnailUrl: string;
+  description?: string;
+  year?: string;
+  category?: string;
+  isPremium: boolean;
+  isPremiumLocked?: boolean;
+}
+
 export default function RelatedPoems({ selectedPoemId, onPoemSelect }: RelatedPoemsProps) {
-  const { relatedPoems, isLoadingRelatedPoems } = usePoems();
+  const [relatedPoems, setRelatedPoems] = useState<Poem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchRelatedPoems() {
+      if (!selectedPoemId) return;
+      
+      setIsLoading(true);
+      try {
+        const response = await apiRequest("GET", `/api/poems/${selectedPoemId}/related`);
+        if (response.ok) {
+          const data = await response.json();
+          setRelatedPoems(data);
+        } else {
+          console.error("Failed to fetch related poems");
+          setRelatedPoems([]);
+        }
+      } catch (error) {
+        console.error("Error fetching related poems:", error);
+        setRelatedPoems([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchRelatedPoems();
+  }, [selectedPoemId]);
 
   if (!selectedPoemId) {
     return null;
   }
 
-  if (isLoadingRelatedPoems) {
+  if (isLoading) {
     return (
       <div className="mt-10">
         <h2 className="font-heading text-xl font-semibold mb-4">You might also enjoy</h2>

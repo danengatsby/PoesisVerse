@@ -1,35 +1,124 @@
-import { useEffect } from "react";
-import { usePoems, type Poem } from "@/hooks/usePoems";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface Poem {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  imageUrl: string;
+  thumbnailUrl: string;
+  description?: string;
+  year?: string;
+  category?: string;
+  isPremium: boolean;
+  isPremiumLocked?: boolean;
+}
 
 interface PoemDisplayProps {
   selectedPoemId: number | null;
 }
 
 export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
-  const { selectedPoem, isLoadingSelectedPoem, bookmarkPoem, removeBookmark, bookmarkedPoems, setSelectedPoemId: updateSelectedPoemId } = usePoems();
+  const [selectedPoem, setSelectedPoem] = useState<Poem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [bookmarkedPoems, setBookmarkedPoems] = useState<Poem[]>([]);
+  const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
   const { isAuthenticated, isSubscribed, subscribe } = useAuth();
+  const { toast } = useToast();
   
-  // Sincronizăm ID-ul poemului selectat din proprietăți cu cel din hook
+  // Fetch selected poem when ID changes
   useEffect(() => {
-    if (selectedPoemId) {
-      updateSelectedPoemId(selectedPoemId);
+    async function fetchPoemData() {
+      if (!selectedPoemId) return;
+      
+      setIsLoading(true);
+      try {
+        const response = await apiRequest("GET", `/api/poems/${selectedPoemId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSelectedPoem(data);
+        } else {
+          console.error("Failed to fetch poem");
+          setSelectedPoem(null);
+        }
+      } catch (error) {
+        console.error("Error fetching poem:", error);
+        setSelectedPoem(null);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, [selectedPoemId, updateSelectedPoemId]);
+    
+    fetchPoemData();
+  }, [selectedPoemId]);
+  
+  // Fetch bookmarks if authenticated
+  useEffect(() => {
+    async function fetchBookmarks() {
+      if (!isAuthenticated) {
+        setBookmarkedPoems([]);
+        return;
+      }
+      
+      setIsLoadingBookmarks(true);
+      try {
+        const response = await apiRequest("GET", `/api/bookmarks`);
+        if (response.ok) {
+          const data = await response.json();
+          setBookmarkedPoems(data);
+        } else {
+          setBookmarkedPoems([]);
+        }
+      } catch (error) {
+        console.error("Error fetching bookmarks:", error);
+        setBookmarkedPoems([]);
+      } finally {
+        setIsLoadingBookmarks(false);
+      }
+    }
+    
+    fetchBookmarks();
+  }, [isAuthenticated]);
 
   const isBookmarked = bookmarkedPoems?.some((poem) => poem.id === selectedPoemId);
 
-  const toggleBookmark = () => {
-    if (!selectedPoemId) return;
+  const toggleBookmark = async () => {
+    if (!selectedPoemId || !isAuthenticated) return;
     
-    if (isBookmarked) {
-      removeBookmark(selectedPoemId);
-    } else {
-      bookmarkPoem(selectedPoemId);
+    try {
+      if (isBookmarked) {
+        await apiRequest("DELETE", `/api/bookmarks/${selectedPoemId}`);
+        setBookmarkedPoems(prev => prev.filter(poem => poem.id !== selectedPoemId));
+        toast({
+          title: "Bookmark removed",
+          description: "Poem removed from your bookmarks"
+        });
+      } else {
+        await apiRequest("POST", "/api/bookmarks", { poemId: selectedPoemId });
+        // Re-fetch bookmarks to get updated list
+        const response = await apiRequest("GET", `/api/bookmarks`);
+        if (response.ok) {
+          const data = await response.json();
+          setBookmarkedPoems(data);
+        }
+        toast({
+          title: "Bookmark added",
+          description: "Poem added to your bookmarks"
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      toast({
+        title: "Error",
+        description: "Could not update bookmark status",
+        variant: "destructive"
+      });
     }
   };
 
@@ -44,7 +133,7 @@ export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
     );
   }
 
-  if (isLoadingSelectedPoem) {
+  if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto">
         <Card className="overflow-hidden">

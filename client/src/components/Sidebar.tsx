@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { usePoems, Poem } from "@/hooks/usePoems";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "wouter";
+import { Link } from "@/lib/SimpleRouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SidebarProps {

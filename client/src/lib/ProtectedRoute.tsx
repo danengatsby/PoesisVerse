@@ -12,10 +12,15 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && currentPath === path) {
       navigateTo('/auth');
     }
-  }, [isLoading, isAuthenticated, navigateTo]);
+  }, [isLoading, isAuthenticated, navigateTo, currentPath, path]);
+
+  // Only render if this is the current path
+  if (currentPath !== path) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -29,9 +34,5 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
     return null;
   }
 
-  if (currentPath === path) {
-    return <Component />;
-  }
-
-  return null;
+  return <Component />;
 }
