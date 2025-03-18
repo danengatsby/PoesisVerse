@@ -8,7 +8,7 @@ import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, ArrowLeft } from "lucide-react";
-import { Link } from "@/lib/SimpleRouter";
+import { Link, useRouter } from "@/lib/SimpleRouter";
 import { useAuth } from "@/hooks/useAuth";
 
 // Load Stripe outside of component render for better performance
@@ -19,6 +19,7 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   const elements = useElements();
   const { toast } = useToast();
   const { refreshSubscription } = useAuth();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
