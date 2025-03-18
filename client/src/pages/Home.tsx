@@ -4,7 +4,7 @@ import PoemDisplay from "@/components/PoemDisplay";
 import RelatedPoems from "@/components/RelatedPoems";
 import { usePoems } from "@/hooks/usePoems";
 
-export default function Home({ match }: { match?: { params: Record<string, string> } }) {
+export default function Home() {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const { poems, setSelectedPoemId, selectedPoemId, refetchPoems } = usePoems();
 

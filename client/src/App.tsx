@@ -12,9 +12,8 @@ import Subscribe from '@/pages/Subscribe';
 import AddPoem from '@/pages/AddPoem';
 import { useAuth } from '@/hooks/useAuth';
 
-// Import our custom router components
-import { RouterProvider, Route, Link } from "./lib/SimpleRouter";
-import { ProtectedRoute } from "./lib/ProtectedRoute";
+// Import wouter components
+import { Switch, Route, Link, useLocation, useRoute } from "wouter";
 
 // Import debug component
 import { DebugComponent } from "@/components/DebugComponent";
@@ -68,16 +67,59 @@ const Navigation = () => {
   );
 };
 
+// Create a Protected Route wrapper component using wouter
+const ProtectedRoute = ({ path, children }: { path: string, children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+  const [matches] = useRoute(path);
+  
+  console.log(`ProtectedRoute: path=${path}, matches=${matches}, isAuthenticated=${isAuthenticated}, isLoading=${isLoading}`);
+  
+  React.useEffect(() => {
+    if (!isLoading && !isAuthenticated && matches) {
+      console.log(`Redirecting to /auth from protected route ${path}`);
+      setLocation("/auth");
+    }
+  }, [isLoading, isAuthenticated, matches, setLocation, path]);
+  
+  if (!matches) return null;
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  
+  return isAuthenticated ? <>{children}</> : null;
+};
+
 // Router component
 const Router = () => {
+  console.log("Rendering Router component");
   return (
-    <>
-      <Route path="/" component={Home} />
-      <Route path="/auth" component={AuthPage} />
-      <ProtectedRoute path="/subscribe" component={Subscribe} />
-      <ProtectedRoute path="/add-poem" component={AddPoem} />
-      <Route path="*" component={NotFound} />
-    </>
+    <Switch>
+      <Route path="/">
+        <Home />
+      </Route>
+      
+      <Route path="/auth">
+        <AuthPage />
+      </Route>
+      
+      <ProtectedRoute path="/subscribe">
+        <Subscribe />
+      </ProtectedRoute>
+      
+      <ProtectedRoute path="/add-poem">
+        <AddPoem />
+      </ProtectedRoute>
+      
+      <Route path="/:rest*">
+        <NotFound />
+      </Route>
+    </Switch>
   );
 };
 
@@ -104,16 +146,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider>
-          <div className="min-h-screen flex flex-col">
-            <Navigation />
-            <div className="flex-1 container mx-auto py-6 px-4">
-              <DebugComponent name="Router">
-                <Router />
-              </DebugComponent>
-            </div>
+        <div className="min-h-screen flex flex-col">
+          <Navigation />
+          <div className="flex-1 container mx-auto py-6 px-4">
+            <DebugComponent name="Router">
+              <Router />
+            </DebugComponent>
           </div>
-        </RouterProvider>
+        </div>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
