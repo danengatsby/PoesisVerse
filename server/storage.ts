@@ -519,8 +519,20 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User> {
     try {
+      // Când activăm un abonament, setăm data abonării și calculăm data expirării (1 an)
+      const updateData: Record<string, any> = { isSubscribed };
+      
+      if (isSubscribed) {
+        const currentDate = new Date();
+        const endDate = new Date(currentDate);
+        endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
+        
+        updateData.subscribedAt = currentDate;
+        updateData.subscriptionEndDate = endDate;
+      }
+      
       const result = await this.db.update(users)
-        .set({ isSubscribed })
+        .set(updateData)
         .where(eq(users.id, userId))
         .returning();
       return result[0];
@@ -532,12 +544,24 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string | null }): Promise<User> {
     try {
+      const updateData: Record<string, any> = {
+        stripeCustomerId: stripeInfo.stripeCustomerId,
+        stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
+        isSubscribed: stripeInfo.stripeSubscriptionId !== null
+      };
+      
+      // Dacă utilizatorul este abonat, actualizăm datele de abonament
+      if (stripeInfo.stripeSubscriptionId) {
+        const currentDate = new Date();
+        const endDate = new Date(currentDate);
+        endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
+        
+        updateData.subscribedAt = currentDate;
+        updateData.subscriptionEndDate = endDate;
+      }
+      
       const result = await this.db.update(users)
-        .set({ 
-          stripeCustomerId: stripeInfo.stripeCustomerId,
-          stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
-          isSubscribed: stripeInfo.stripeSubscriptionId !== null
-        })
+        .set(updateData)
         .where(eq(users.id, userId))
         .returning();
       return result[0];
