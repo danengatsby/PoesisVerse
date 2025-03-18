@@ -591,27 +591,114 @@ export default function PoemManagement() {
                 className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="imageUpload" className="text-right pt-2">
+                Imagine
+              </Label>
+              <div className="col-span-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'image')}
+                    className="flex-1"
+                  />
+                  <div className="flex shrink-0 items-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      type="button"
+                      className="text-blue-600 hover:text-blue-800" 
+                      title="Încarcă imagine"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {imagePreview && (
+                  <div className="relative rounded-md overflow-hidden border w-48 h-auto">
+                    <img src={imagePreview} alt="Previzualizare" className="w-full h-auto object-cover" />
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="absolute top-2 right-2 h-6 w-6 rounded-full p-0"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setImageFile(null);
+                        setNewPoem({...newPoem, imageUrl: ''});
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="audioUpload" className="text-right pt-2">
+                Fișier Audio
+              </Label>
+              <div className="col-span-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="audioUpload"
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => handleFileUpload(e, 'audio')}
+                    className="flex-1"
+                  />
+                  <div className="flex shrink-0 items-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      type="button"
+                      className="text-blue-600 hover:text-blue-800" 
+                      title="Încarcă fișier audio"
+                    >
+                      <Music className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {audioName && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Music className="h-4 w-4 text-blue-500" />
+                    <span>{audioName}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        setAudioName(null);
+                        setAudioFile(null);
+                        setNewPoem({...newPoem, audioUrl: ''});
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4 hidden">
               <Label htmlFor="imageUrl" className="text-right">
-                URL Imagine
+                URL Imagine (Automat)
               </Label>
               <Input
                 id="imageUrl"
                 value={newPoem.imageUrl}
-                onChange={(e) => setNewPoem({ ...newPoem, imageUrl: e.target.value })}
-                placeholder="https://example.com/image.jpg"
+                readOnly
                 className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-center gap-4 hidden">
               <Label htmlFor="audioUrl" className="text-right">
-                URL Fișier Audio
+                URL Fișier Audio (Automat)
               </Label>
               <Input
                 id="audioUrl"
                 value={newPoem.audioUrl}
-                onChange={(e) => setNewPoem({ ...newPoem, audioUrl: e.target.value })}
-                placeholder="https://example.com/poem-audio.mp3"
+                readOnly
                 className="col-span-3"
               />
             </div>
@@ -721,27 +808,118 @@ export default function PoemManagement() {
                 className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="edit-imageUpload" className="text-right pt-2">
+                Imagine
+              </Label>
+              <div className="col-span-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="edit-imageUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'image', true)}
+                    className="flex-1"
+                  />
+                  <div className="flex shrink-0 items-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      type="button"
+                      className="text-blue-600 hover:text-blue-800" 
+                      title="Încarcă imagine"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {(imagePreview || editPoem.imageUrl) && (
+                  <div className="relative rounded-md overflow-hidden border w-48 h-auto">
+                    <img 
+                      src={imagePreview || editPoem.imageUrl} 
+                      alt="Previzualizare" 
+                      className="w-full h-auto object-cover" 
+                    />
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="absolute top-2 right-2 h-6 w-6 rounded-full p-0"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setImageFile(null);
+                        setEditPoem({...editPoem, imageUrl: ''});
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="edit-audioUpload" className="text-right pt-2">
+                Fișier Audio
+              </Label>
+              <div className="col-span-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="edit-audioUpload"
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => handleFileUpload(e, 'audio', true)}
+                    className="flex-1"
+                  />
+                  <div className="flex shrink-0 items-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      type="button"
+                      className="text-blue-600 hover:text-blue-800" 
+                      title="Încarcă fișier audio"
+                    >
+                      <Music className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {(audioName || editPoem.audioUrl) && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Music className="h-4 w-4 text-blue-500" />
+                    <span>{audioName || 'Fișier audio existent'}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 rounded-full p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        setAudioName(null);
+                        setAudioFile(null);
+                        setEditPoem({...editPoem, audioUrl: ''});
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4 hidden">
               <Label htmlFor="edit-imageUrl" className="text-right">
-                URL Imagine
+                URL Imagine (Automat)
               </Label>
               <Input
                 id="edit-imageUrl"
                 value={editPoem.imageUrl}
-                onChange={(e) => setEditPoem({ ...editPoem, imageUrl: e.target.value })}
-                placeholder="https://example.com/image.jpg"
+                readOnly
                 className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-center gap-4 hidden">
               <Label htmlFor="edit-audioUrl" className="text-right">
-                URL Fișier Audio
+                URL Fișier Audio (Automat)
               </Label>
               <Input
                 id="edit-audioUrl"
                 value={editPoem.audioUrl}
-                onChange={(e) => setEditPoem({ ...editPoem, audioUrl: e.target.value })}
-                placeholder="https://example.com/poem-audio.mp3"
+                readOnly
                 className="col-span-3"
               />
             </div>
