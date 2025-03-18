@@ -372,6 +372,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update a poem (requires authentication, admin only)
+  app.put("/api/poems/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user;
+      
+      // Verifică dacă utilizatorul este Administrator
+      if (currentUser.username !== "Administrator") {
+        return res.status(403).json({ message: "Acces interzis. Numai administratorii pot actualiza poeme." });
+      }
+      
+      const poemId = parseInt(req.params.id);
+      if (isNaN(poemId)) {
+        return res.status(400).json({ message: "ID-ul poemului trebuie să fie un număr." });
+      }
+      
+      // Verifică dacă poemul există
+      const existingPoem = await storage.getPoemById(poemId);
+      if (!existingPoem) {
+        return res.status(404).json({ message: `Poemul cu ID-ul ${poemId} nu a fost găsit.` });
+      }
+      
+      const poemSchema = z.object({
+        title: z.string().min(3),
+        content: z.string().min(10),
+        author: z.string().min(2),
+        description: z.string().optional(),
+        year: z.string().optional(),
+        category: z.string().optional(),
+        isPremium: z.boolean(),
+        imageUrl: z.string().url().optional(),
+        thumbnailUrl: z.string().url().optional(),
+      });
+      
+      const parsedData = poemSchema.safeParse(req.body);
+      if (!parsedData.success) {
+        return res.status(400).json({ 
+          message: 'Invalid poem data', 
+          errors: parsedData.error.format() 
+        });
+      }
+      
+      // Check if another poem with the same title already exists (except this one)
+      const poemWithSameTitle = await storage.getPoemByTitle(parsedData.data.title);
+      if (poemWithSameTitle && poemWithSameTitle.id !== poemId) {
+        return res.status(400).json({ message: 'Another poem with this title already exists' });
+      }
+      
+      // Update poem
+      const updatedPoem = await storage.updatePoem(poemId, {
+        ...parsedData.data,
+        id: poemId,
+        description: parsedData.data.description || null,
+        year: parsedData.data.year || null,
+        category: parsedData.data.category || null,
+      });
+      
+      return res.status(200).json(updatedPoem);
+    } catch (error) {
+      console.error('Error updating poem:', error);
+      return res.status(500).json({ message: 'Failed to update poem' });
+    }
+  });
+  
+  // Delete a poem (requires authentication, admin only)
+  app.delete("/api/poems/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user;
+      
+      // Verifică dacă utilizatorul este Administrator
+      if (currentUser.username !== "Administrator") {
+        return res.status(403).json({ message: "Acces interzis. Numai administratorii pot șterge poeme." });
+      }
+      
+      const poemId = parseInt(req.params.id);
+      if (isNaN(poemId)) {
+        return res.status(400).json({ message: "ID-ul poemului trebuie să fie un număr." });
+      }
+      
+      // Verifică dacă poemul există
+      const existingPoem = await storage.getPoemById(poemId);
+      if (!existingPoem) {
+        return res.status(404).json({ message: `Poemul cu ID-ul ${poemId} nu a fost găsit.` });
+      }
+      
+      // Șterge poemul
+      await storage.deletePoem(poemId);
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: `Poemul "${existingPoem.title}" a fost șters cu succes.` 
+      });
+    } catch (error) {
+      console.error('Error deleting poem:', error);
+      return res.status(500).json({ message: 'Failed to delete poem' });
+    }
+  });
+  
   // Get a specific poem by ID
   app.get("/api/poems/:id", async (req, res) => {
     try {

@@ -11,6 +11,7 @@ import NotFound from '@/pages/not-found';
 import Subscribe from '@/pages/Subscribe';
 import AddPoem from '@/pages/AddPoem';
 import Subscribers from '@/pages/Subscribers';
+import PoemManagement from '@/pages/PoemManagement';
 import { useAuth } from '@/hooks/useAuth';
 
 // Import wouter components
@@ -80,6 +81,9 @@ const Navigation = () => {
               <>
                 {isAdmin && (
                   <Link href="/add-poem" className="hover:text-gray-300">Add Poem</Link>
+                )}
+                {isAdmin && (
+                  <Link href="/poems-management" className="hover:text-gray-300">Poeme</Link>
                 )}
                 {isAdmin && (
                   <Link href="/subscribers" className="hover:text-gray-300">Subscribers</Link>
@@ -198,6 +202,12 @@ const Router = () => {
       <ProtectedRoute path="/subscribers">
         <WithMatch>
           <Subscribers />
+        </WithMatch>
+      </ProtectedRoute>
+      
+      <ProtectedRoute path="/poems-management">
+        <WithMatch>
+          <PoemManagement />
         </WithMatch>
       </ProtectedRoute>
       
