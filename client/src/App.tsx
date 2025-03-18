@@ -108,7 +108,9 @@ function App() {
           <div className="min-h-screen flex flex-col">
             <Navigation />
             <div className="flex-1 container mx-auto py-6 px-4">
-              <Router />
+              <DebugComponent name="Router">
+                <Router />
+              </DebugComponent>
             </div>
           </div>
         </RouterProvider>

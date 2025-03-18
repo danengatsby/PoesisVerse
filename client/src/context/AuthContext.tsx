@@ -21,6 +21,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User>;
   register: (username: string, email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
+  subscribe: () => void;
 }
 
 // Valori inițiale pentru context
