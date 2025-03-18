@@ -67,6 +67,8 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
   const poemId = match?.params?.id ? parseInt(match.params.id) : null;
   const isEditMode = !!poemId;
   const [isLoading, setIsLoading] = useState(isEditMode);
+  
+  console.log("AddPoem: Mode =", isEditMode ? "EDIT" : "ADD", "ID =", poemId, "Match:", match);
 
   // Funcție pentru redimensionarea imaginilor înainte de încărcare
   const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
