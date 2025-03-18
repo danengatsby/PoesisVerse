@@ -275,8 +275,8 @@ export default function PoemManagement() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto py-4 px-4 h-screen flex flex-col">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
           <Button 
             onClick={() => navigate("/")} 
@@ -309,95 +309,97 @@ export default function PoemManagement() {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full bg-white shadow-md rounded-lg overflow-hidden">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Titlu</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Autor</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conținut</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Premium</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data adăugării</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acțiuni</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {poems.map((poem) => (
-                <tr key={poem.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{poem.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{poem.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{poem.author}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{truncateContent(poem.content)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      poem.isPremium 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {poem.isPremium ? 'Premium' : 'Gratuit'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{poem.category || 'Necategorizat'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(poem.createdAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditPoem(poem)}
-                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                    >
-                      <Pencil className="h-3.5 w-3.5 mr-1" />
-                      Editează
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <Trash className="h-3.5 w-3.5 mr-1" />
-                          Șterge
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Sunteți sigur că doriți să ștergeți poemul "{poem.title}"? 
-                            Această acțiune nu poate fi anulată și toate datele asociate vor fi șterse.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Anulează</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDeletePoem(poem.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            {deletingPoem ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : (
-                              <Trash className="h-4 w-4 mr-2" />
-                            )}
-                            Șterge
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </td>
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+            <table className="w-full bg-white shadow-md rounded-lg">
+              <thead className="bg-gray-100 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Titlu</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Autor</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conținut</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Premium</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data adăugării</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acțiuni</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {poems.map((poem) => (
+                  <tr key={poem.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{poem.id}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{poem.title}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{poem.author}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 max-w-[300px] truncate">{truncateContent(poem.content)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        poem.isPremium 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {poem.isPremium ? 'Premium' : 'Gratuit'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{poem.category || 'Necategorizat'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(poem.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditPoem(poem)}
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                        Editează
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <Trash className="h-3.5 w-3.5 mr-1" />
+                            Șterge
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Sunteți sigur că doriți să ștergeți poemul "{poem.title}"? 
+                              Această acțiune nu poate fi anulată și toate datele asociate vor fi șterse.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Anulează</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeletePoem(poem.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              {deletingPoem ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              ) : (
+                                <Trash className="h-4 w-4 mr-2" />
+                              )}
+                              Șterge
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Dialog pentru adăugare poem */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adaugă poem nou</DialogTitle>
             <DialogDescription>
@@ -527,7 +529,7 @@ export default function PoemManagement() {
 
       {/* Dialog pentru editare poem */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editează poem</DialogTitle>
             <DialogDescription>
