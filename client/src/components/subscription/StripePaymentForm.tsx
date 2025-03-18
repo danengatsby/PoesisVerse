@@ -62,10 +62,30 @@ function CheckoutForm({
       });
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
       // Payment success
+      try {
+        // Mark the subscription as successful and trigger the email
+        const response = await fetch('/api/mark-subscription-success', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        if (!data.success) {
+          console.error('Error marking subscription as successful:', data.error);
+        } else {
+          console.log('Subscription marked as successful:', data.message);
+        }
+      } catch (apiError) {
+        console.error('Error calling mark-subscription-success:', apiError);
+      }
+      
       refreshSubscription();
       toast({
         title: "Payment Successful",
-        description: "Thank you for subscribing!",
+        description: "Thank you for subscribing! You will receive a confirmation email shortly.",
       });
       setTimeout(() => {
         setLocation('/?subscription=success');

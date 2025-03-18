@@ -726,6 +726,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Mark subscription as successful and send confirmation email
+  app.post("/api/mark-subscription-success", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      
+      // Update user subscription status
+      const updatedUser = await storage.updateUserSubscription(user.id, true);
+      
+      // Send email confirmation
+      try {
+        await sendSubscriptionEmail(updatedUser);
+        console.log('Subscription confirmation email sent successfully for:', updatedUser.email);
+      } catch (emailError: any) {
+        console.error('Error sending subscription confirmation email:', emailError);
+        // Don't return an error, continue with subscription success
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Subscription activated successfully', 
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          isSubscribed: updatedUser.isSubscribed
+        } 
+      });
+    } catch (error: any) {
+      console.error('Error marking subscription as successful:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to activate subscription',
+        error: error.message || 'Unknown error'
+      });
+    }
+  });
+  
   // Create a payment intent for one-time payments
   app.post("/api/create-payment-intent", async (req, res) => {
     if (!stripe) {
