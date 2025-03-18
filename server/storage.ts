@@ -13,6 +13,7 @@ export interface IStorage {
   getAllPoems(): Promise<Poem[]>;
   getPremiumPoems(): Promise<Poem[]>;
   getFreePoems(): Promise<Poem[]>;
+  getRecentlyAddedPoems(): Promise<Poem[]>; // Metodă nouă pentru a obține poemele adăugate recent
   getPoemById(id: number): Promise<Poem | undefined>;
   getPoemByTitle(title: string): Promise<Poem | undefined>;
   createPoem(poem: Poem): Promise<Poem>;
@@ -24,6 +25,10 @@ export interface IStorage {
   removeBookmark(userId: number, poemId: number): Promise<void>;
 }
 
+// Import NodeJS file system module - not used in this implementation but kept for future reference
+// import * as fs from 'fs';
+// import * as path from 'path';
+
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private poems: Map<number, Poem>;
@@ -31,6 +36,7 @@ export class MemStorage implements IStorage {
   private userIdCounter: number;
   private poemIdCounter: number;
   private userPoemIdCounter: number;
+  private lastAddedPoems: Poem[] = []; // Păstrăm o referință la ultimele poeme adăugate
 
   constructor() {
     this.users = new Map();
@@ -40,7 +46,13 @@ export class MemStorage implements IStorage {
     this.poemIdCounter = 1;
     this.userPoemIdCounter = 1;
     
-    // Adăugăm un cont de test implicit care va fi disponibil mereu
+    // Inițializăm datele
+    this.initializeUsers();
+    this.initializePoems();
+  }
+  
+  private initializeUsers() {
+    // Utilizator de test
     const testUser: User = {
       id: this.userIdCounter++,
       username: "test",
@@ -54,7 +66,7 @@ export class MemStorage implements IStorage {
     };
     this.users.set(testUser.id, testUser);
     
-    // Pentru a avea contul pe care l-ați creat
+    // Utilizator predefinit
     const savedUser: User = {
       id: this.userIdCounter++,
       username: "poet",
@@ -67,9 +79,6 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     };
     this.users.set(savedUser.id, savedUser);
-    
-    // Initialize with sample poems
-    this.initializePoems();
   }
 
   private initializePoems() {
@@ -234,6 +243,11 @@ export class MemStorage implements IStorage {
   async getFreePoems(): Promise<Poem[]> {
     return Array.from(this.poems.values()).filter(poem => !poem.isPremium);
   }
+  
+  // Metodă nouă pentru a obține poemele adăugate recent
+  async getRecentlyAddedPoems(): Promise<Poem[]> {
+    return [...this.lastAddedPoems]; // Returnăm o copie a array-ului pentru a preveni modificările accidentale
+  }
 
   async getPoemById(id: number | null): Promise<Poem | undefined> {
     if (id === null) return undefined;
@@ -248,6 +262,14 @@ export class MemStorage implements IStorage {
     const id = this.poemIdCounter++;
     const newPoem = { ...poem, id };
     this.poems.set(id, newPoem);
+    
+    // Adăugăm poemul nou la colecția de poeme adăugate recent
+    this.lastAddedPoems.push(newPoem);
+    
+    // Verificăm dacă avem poeme create de utilizator și le afișăm în consolă pentru debug
+    console.log(`Poem nou adăugat: ID=${newPoem.id}, Titlu=${newPoem.title}`);
+    console.log(`Total poeme adăugate: ${this.lastAddedPoems.length}`);
+    
     return newPoem;
   }
 
