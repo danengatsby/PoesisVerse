@@ -606,11 +606,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subscriptionInfo = null;
       if (user.isSubscribed && user.subscribedAt && user.subscriptionEndDate) {
         const now = new Date();
-        const endDate = new Date(user.subscription_end_date);
+        const endDate = new Date(user.subscriptionEndDate);
         
         // Calculate days remaining
         const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        const startDate = new Date(user.subscribed_at);
+        const startDate = new Date(user.subscribedAt);
         
         subscriptionInfo = {
           startDate: startDate.toISOString().split('T')[0],
@@ -663,6 +663,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error retrieving subscribers:", error);
       return res.status(500).json({ message: "Failed to retrieve subscribers" });
+    }
+  });
+  
+  // Delete user by email (admin only)
+  app.delete("/api/admin/users", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user;
+      const { email } = req.body;
+      
+      // Verifică dacă utilizatorul este Administrator
+      if (currentUser.username !== "Administrator") {
+        return res.status(403).json({ message: "Acces interzis. Numai administratorii pot șterge utilizatori." });
+      }
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email-ul utilizatorului este obligatoriu." });
+      }
+      
+      // Obține utilizatorul după email
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        return res.status(404).json({ message: `Utilizatorul cu email-ul ${email} nu a fost găsit.` });
+      }
+      
+      // Șterge utilizatorul
+      await storage.deleteUser(user.id);
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: `Utilizatorul cu email-ul ${email} a fost șters cu succes.` 
+      });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "A apărut o eroare la ștergerea utilizatorului." 
+      });
     }
   });
   

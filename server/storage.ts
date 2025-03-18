@@ -8,6 +8,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User>;
   updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
+  deleteUser(userId: number): Promise<void>; // Adăugat pentru ștergerea utilizatorilor
   
   // Poem operations
   getAllPoems(): Promise<Poem[]>;
@@ -356,6 +357,24 @@ export class MemStorage implements IStorage {
       const updated = { ...bookmark, isBookmarked: false };
       this.userPoems.set(bookmark.id, updated);
     }
+  }
+  
+  async deleteUser(userId: number): Promise<void> {
+    if (!this.users.has(userId)) {
+      throw new Error(`User with id ${userId} not found`);
+    }
+    
+    // Delete the user
+    this.users.delete(userId);
+    
+    // Delete any user-poem relationships
+    const userPoemIds = Array.from(this.userPoems.values())
+      .filter(up => up.userId === userId)
+      .map(up => up.id);
+    
+    userPoemIds.forEach(id => this.userPoems.delete(id));
+    
+    console.log(`User ${userId} deleted successfully along with ${userPoemIds.length} related user-poem relationships`);
   }
 }
 
@@ -752,6 +771,23 @@ export class DatabaseStorage implements IStorage {
         );
     } catch (error) {
       console.error("Eroare la eliminarea bookmark-ului:", error);
+      throw error;
+    }
+  }
+  
+  async deleteUser(userId: number): Promise<void> {
+    try {
+      // Șterge mai întâi relațiile utilizator-poezii
+      await this.db.delete(userPoems)
+        .where(eq(userPoems.userId, userId));
+      
+      // Șterge utilizatorul
+      await this.db.delete(users)
+        .where(eq(users.id, userId));
+      
+      console.log(`User ${userId} deleted successfully from database`);
+    } catch (error) {
+      console.error(`Error deleting user ${userId}:`, error);
       throw error;
     }
   }
