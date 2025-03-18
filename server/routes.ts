@@ -822,13 +822,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         card = {} 
       } = req.body; // Get data from request body
       
-      // Validate planType
-      if (planType !== 'monthly' && planType !== 'annual') {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid plan type. Must be "monthly" or "annual".'
-        });
+      // Validate and normalize planType
+      let normalizedPlanType: 'monthly' | 'annual' = 'monthly';
+      
+      // Verificăm și normalizăm tipul de plan
+      const planTypeLower = String(planType).toLowerCase().trim();
+      if (planTypeLower === 'annual' || planTypeLower === 'yearly') {
+        normalizedPlanType = 'annual';
+      } else if (planTypeLower === 'monthly' || planTypeLower === 'month') {
+        normalizedPlanType = 'monthly';
+      } else {
+        console.log(`Plan type invalid: "${planType}", folosim implicit "monthly"`);
+        // Default la monthly în loc să dăm eroare
       }
+      
+      console.log(`Plan normalizat: "${normalizedPlanType}" (original "${planType}")`);
+      
       
       // Update user subscription status
       const updatedUser = await storage.updateUserSubscription(user.id, true);
@@ -860,7 +869,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Actualizăm detaliile facturii cu informații de la Stripe
             if (charge.payment_method_details?.card) {
-              invoiceDetails.cardLast4 = charge.payment_method_details.card.last4;
+              const last4 = charge.payment_method_details.card.last4;
+              if (typeof last4 === 'string') {
+                invoiceDetails.cardLast4 = last4;
+              }
             }
             
             if (charge.receipt_number) {
@@ -879,10 +891,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send email confirmation with plan type and invoice details
       try {
-        await sendSubscriptionEmail(updatedUser, planType, invoiceDetails);
-        console.log(`${planType} subscription confirmation email with invoice sent successfully for:`, updatedUser.email);
+        await sendSubscriptionEmail(updatedUser, normalizedPlanType, invoiceDetails);
+        console.log(`${normalizedPlanType} subscription confirmation email with invoice sent successfully for:`, updatedUser.email);
       } catch (emailError: any) {
         console.error('Error sending subscription confirmation email:', emailError);
+        console.error('Email error details:', emailError.message);
         // Don't return an error, continue with subscription success
       }
       
@@ -1005,7 +1018,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // Actualizăm detaliile facturii cu informații de la Stripe
                 if (charge.payment_method_details?.card) {
-                  invoiceDetails.cardLast4 = charge.payment_method_details.card.last4 || undefined;
+                  const last4 = charge.payment_method_details.card.last4;
+                  if (typeof last4 === 'string') {
+                    invoiceDetails.cardLast4 = last4;
+                  }
                 }
                 
                 if (charge.receipt_number) {
