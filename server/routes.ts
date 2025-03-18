@@ -601,9 +601,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/profile", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      
+      // Calculate subscription info if the user is subscribed
+      let subscriptionInfo = null;
+      if (user.isSubscribed && user.subscribed_at && user.subscription_end_date) {
+        const now = new Date();
+        const endDate = new Date(user.subscription_end_date);
+        
+        // Calculate days remaining
+        const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const startDate = new Date(user.subscribed_at);
+        
+        subscriptionInfo = {
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          daysRemaining: daysRemaining,
+          isActive: daysRemaining > 0
+        };
+      }
+      
       // Return user without password
       const { password, ...userWithoutPassword } = user;
-      return res.status(200).json(userWithoutPassword);
+      
+      return res.status(200).json({
+        ...userWithoutPassword,
+        subscriptionInfo
+      });
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return res.status(500).json({ message: 'Failed to fetch user profile' });

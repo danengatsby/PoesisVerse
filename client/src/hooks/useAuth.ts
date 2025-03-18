@@ -2,6 +2,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+interface SubscriptionInfo {
+  startDate: string;
+  endDate: string;
+  daysRemaining: number;
+  isActive: boolean;
+}
+
 interface User {
   id: number;
   username: string;
@@ -9,6 +16,10 @@ interface User {
   isSubscribed: boolean;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
+  subscriptionInfo?: SubscriptionInfo | null;
+  createdAt?: string | null;
+  subscribedAt?: string | null;
+  subscriptionEndDate?: string | null;
 }
 
 interface LoginCredentials {
