@@ -49,7 +49,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function AddPoem() {
+export default function AddPoem({ match }: { match?: { params: Record<string, string> } }) {
   const { isAuthenticated } = useAuth();
   const { refetchPoems } = usePoems(); // Adăugăm refetchPoems pentru a reîmprospăta lista
   const [isPending, setIsPending] = useState(false);

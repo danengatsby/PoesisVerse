@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import LoginModal from "@/components/auth/LoginModal";
 import SignupModal from "@/components/auth/SignupModal";
 
-export default function AuthPage() {
+export default function AuthPage({ match }: { match?: { params: Record<string, string> } }) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(true);
