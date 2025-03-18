@@ -740,7 +740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const amount = planType === 'monthly' ? 599 : 4999; // $5.99 or $49.99
       
       // Create or get Stripe customer
-      let customerId = user.stripeCustomerId;
+      let customerId = user.stripe_customer_id;
       
       if (!customerId) {
         const customer = await stripe.customers.create({
@@ -813,15 +813,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       
-      if (!user.stripeSubscriptionId) {
+      if (!user.stripe_subscription_id) {
         return res.status(200).json({ isActive: false });
       }
       
-      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
       const isActive = subscription.status === 'active' || subscription.status === 'trialing';
       
       // Update user subscription status if needed
-      if (isActive !== user.isSubscribed) {
+      if (isActive !== user.is_subscribed) {
         await storage.updateUserSubscription(user.id, isActive);
       }
       
@@ -945,7 +945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
-          isSubscribed: updatedUser.isSubscribed
+          isSubscribed: updatedUser.is_subscribed
         } 
       });
     } catch (error: any) {
@@ -1105,7 +1105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Get user by stripeCustomerId
           const users = await storage.getAllUsers();
-          const user = Array.from(users.values()).find(u => u.stripeCustomerId === subscription.customer);
+          const user = Array.from(users.values()).find(u => u.stripe_customer_id === subscription.customer);
           
           if (user) {
             // Update subscription status
