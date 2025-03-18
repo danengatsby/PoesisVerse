@@ -6,6 +6,8 @@ import Stripe from "stripe";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import nodemailer from "nodemailer";
+import { User } from "@shared/schema";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('Missing STRIPE_SECRET_KEY environment variable. Stripe functionality will not work.');
@@ -15,6 +17,71 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = process.env.STRIPE_SECRET_KEY 
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
+  
+// Configurare nodemailer pentru trimiterea de email-uri
+const transporter = nodemailer.createTransport({
+  service: 'gmail',  // Folosim Gmail pentru simplitate
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // true pentru SSL
+  auth: {
+    user: process.env.EMAIL_USER || 'poeziiverse@gmail.com', // email-ul app-ului
+    pass: process.env.EMAIL_PASSWORD || 'app_password' // parola de aplicație (pentru Gmail)
+  }
+});
+
+// Funcție pentru trimiterea de email-uri de confirmare a abonamentului
+async function sendSubscriptionEmail(user: User): Promise<void> {
+  // Template email pentru utilizator nou abonat
+  const mailOptions = {
+    from: process.env.EMAIL_USER || 'poeziiverse@gmail.com',
+    to: user.email,
+    subject: 'Confirmare abonament PoesisVerse Premium',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #4b5563;">PoesisVerse</h1>
+          <p style="color: #6b7280; font-size: 18px;">Lumea poeziei la un click distanță</p>
+        </div>
+        
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+          <h2 style="color: #1f2937; margin-top: 0;">Felicitări, ${user.username}!</h2>
+          <p style="color: #4b5563; font-size: 16px;">Abonamentul tău Premium a fost activat cu succes.</p>
+          <p style="color: #4b5563; font-size: 16px;">Acum ai acces la întreaga noastră colecție de poezii premium și la toate caracteristicile platformei.</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #1f2937;">Ce include abonamentul tău:</h3>
+          <ul style="color: #4b5563; font-size: 16px;">
+            <li>Acces la toate poeziile premium</li>
+            <li>Posibilitatea de a marca poezii favorite</li>
+            <li>Conținut exclusiv actualizat regulat</li>
+            <li>Suport prioritar</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center;">
+          <a href="${process.env.APP_URL || 'https://poeziiverse.com'}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Accesează contul tău</a>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #6b7280; font-size: 14px; text-align: center;">
+          <p>Dacă ai întrebări sau probleme, te rugăm să ne contactezi la adresa <a href="mailto:support@poeziiverse.com" style="color: #4f46e5;">support@poeziiverse.com</a>.</p>
+          <p>&copy; ${new Date().getFullYear()} PoesisVerse. Toate drepturile rezervate.</p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    // Trimite email-ul
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email trimis: %s', info.messageId);
+    return Promise.resolve();
+  } catch (error) {
+    console.error('Eroare la trimiterea email-ului:', error);
+    return Promise.reject(error);
+  }
+}
 
 // Create a persistent memory store for sessions
 const MemoryStore = createMemoryStore(session);
