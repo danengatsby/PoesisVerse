@@ -131,7 +131,8 @@ export class MemStorage implements IStorage {
         description: "Published in 1920, this poem reflects on the destructive forces of human nature.",
         year: "1920",
         category: "Classic Poetry",
-        isPremium: false
+        isPremium: false,
+        createdAt: new Date()
       },
       {
         title: "Hope is the thing with feathers",
@@ -142,7 +143,8 @@ export class MemStorage implements IStorage {
         description: "Emily Dickinson uses a bird as a metaphor for hope in this lovely poem.",
         year: "1891",
         category: "Classic Poetry",
-        isPremium: true
+        isPremium: true,
+        createdAt: new Date()
       },
       {
         title: "Do not go gentle into that good night",
@@ -153,7 +155,8 @@ export class MemStorage implements IStorage {
         description: "A passionate poem about confronting death with passion and resistance.",
         year: "1951",
         category: "Modern Poetry",
-        isPremium: true
+        isPremium: true,
+        createdAt: new Date()
       },
       {
         title: "The Waste Land",
@@ -164,7 +167,8 @@ export class MemStorage implements IStorage {
         description: "A landmark of modernist poetry that reflects the disillusionment of the post-World War I generation.",
         year: "1922",
         category: "Modern Poetry",
-        isPremium: true
+        isPremium: true,
+        createdAt: new Date()
       },
       {
         title: "Ozymandias",
@@ -175,7 +179,8 @@ export class MemStorage implements IStorage {
         description: "Shelley's famous sonnet about the fleeting nature of power and the inevitable decline of all leaders and empires.",
         year: "1818",
         category: "Classic Poetry",
-        isPremium: false
+        isPremium: false,
+        createdAt: new Date()
       }
     ];
     
