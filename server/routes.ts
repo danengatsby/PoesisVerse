@@ -645,13 +645,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Obține toți utilizatorii
       const allUsers = await storage.getAllUsers();
-      // Conversia Map în Array și filtrează doar utilizatorii abonați
+      // Conversia Map în Array - includem toți utilizatorii, nu doar cei abonați
       const subscribers = Array.from(allUsers.values())
-        .filter(user => user.isSubscribed)
         .map(user => ({
           id: user.id,
           username: user.username,
           email: user.email,
+          isSubscribed: user.isSubscribed,
           subscriptionType: user.subscriptionEndDate && user.subscribedAt ? 
             (new Date(user.subscriptionEndDate).getTime() - new Date(user.subscribedAt).getTime() > 31 * 24 * 60 * 60 * 1000 ? 
               'anual' : 'lunar') : 'nedeterminat',

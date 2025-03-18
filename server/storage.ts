@@ -540,7 +540,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // Când activăm un abonament, setăm data abonării și calculăm data expirării (1 an)
       const updateData: Record<string, any> = { 
-        is_subscribed: isSubscribed 
+        isSubscribed: isSubscribed 
       };
       
       if (isSubscribed) {
@@ -548,8 +548,8 @@ export class DatabaseStorage implements IStorage {
         const endDate = new Date(currentDate);
         endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
         
-        updateData.subscribed_at = currentDate;
-        updateData.subscription_end_date = endDate;
+        updateData.subscribedAt = currentDate;
+        updateData.subscriptionEndDate = endDate;
       }
       
       const result = await this.db.update(users)
