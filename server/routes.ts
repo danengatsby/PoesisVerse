@@ -67,7 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint de debugging pentru a verifica utilizatorii din sistem
   app.get("/api/debug/users", async (_req, res) => {
     try {
-      const users = Array.from(storage.getAllUsers().values()).map(user => ({
+      const usersMap = await storage.getAllUsers();
+      const users = Array.from(usersMap.values()).map(user => ({
         id: user.id,
         username: user.username,
         email: user.email,
