@@ -8,6 +8,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User>;
   updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
+  updateUserDetails(userId: number, details: { username?: string, email?: string }): Promise<User>; // Metodă nouă pentru actualizarea detaliilor utilizatorului
   deleteUser(userId: number): Promise<void>; // Adăugat pentru ștergerea utilizatorilor
   
   // Poem operations
@@ -249,6 +250,21 @@ export class MemStorage implements IStorage {
       stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
       isSubscribed: stripeInfo.stripeSubscriptionId !== null
     };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+
+  async updateUserDetails(userId: number, details: { username?: string, email?: string }): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error(`User with id ${userId} not found`);
+    
+    // Actualizăm doar câmpurile care sunt furnizate
+    const updatedUser = { 
+      ...user,
+      ...(details.username && { username: details.username }),
+      ...(details.email && { email: details.email })
+    };
+    
     this.users.set(userId, updatedUser);
     return updatedUser;
   }
@@ -598,6 +614,46 @@ export class DatabaseStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error("Eroare la actualizarea informațiilor Stripe ale utilizatorului:", error);
+      throw error;
+    }
+  }
+  
+  async updateUserDetails(userId: number, details: { username?: string, email?: string }): Promise<User> {
+    try {
+      // Creăm un obiect cu valorile care trebuie actualizate
+      const updateData: Record<string, any> = {};
+      
+      if (details.username) {
+        updateData.username = details.username;
+      }
+      
+      if (details.email) {
+        updateData.email = details.email;
+      }
+      
+      // Verificăm dacă avem valori de actualizat
+      if (Object.keys(updateData).length === 0) {
+        // Dacă nu avem nimic de actualizat, returnăm utilizatorul existent
+        const existingUser = await this.getUser(userId);
+        if (!existingUser) {
+          throw new Error(`User with id ${userId} not found`);
+        }
+        return existingUser;
+      }
+      
+      // Actualizăm utilizatorul
+      const result = await this.db.update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning();
+        
+      if (result.length === 0) {
+        throw new Error(`User with id ${userId} not found`);
+      }
+      
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la actualizarea detaliilor utilizatorului:", error);
       throw error;
     }
   }

@@ -666,6 +666,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Admin routes for user management
+  
+  // Create new user (admin only)
+  app.post("/api/admin/users", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user;
+      
+      // Verifică dacă utilizatorul este Administrator
+      if (currentUser.username !== "Administrator") {
+        return res.status(403).json({ 
+          message: "Acces interzis. Numai administratorii pot adăuga utilizatori." 
+        });
+      }
+      
+      const { username, email, password, isSubscribed = false } = req.body;
+      
+      if (!username || !email || !password) {
+        return res.status(400).json({ 
+          message: "Numele de utilizator, email-ul și parola sunt obligatorii." 
+        });
+      }
+      
+      // Verifică dacă email-ul este deja folosit
+      const existingUserByEmail = await storage.getUserByEmail(email);
+      if (existingUserByEmail) {
+        return res.status(400).json({ 
+          message: `Email-ul ${email} este deja folosit.` 
+        });
+      }
+      
+      // Criptează parola
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Creează utilizatorul
+      const newUser = await storage.createUser({
+        username,
+        email,
+        password: hashedPassword
+      });
+      
+      // Dacă utilizatorul trebuie să fie abonat, actualizează statusul
+      if (isSubscribed) {
+        await storage.updateUserSubscription(newUser.id, true);
+      }
+      
+      return res.status(201).json({
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        isSubscribed: newUser.isSubscribed
+      });
+      
+    } catch (error) {
+      console.error("Error creating user:", error);
+      return res.status(500).json({ 
+        message: "A apărut o eroare la crearea utilizatorului." 
+      });
+    }
+  });
+  
+  // Update user (admin only)
+  app.put("/api/admin/users/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user;
+      const userId = parseInt(req.params.id);
+      
+      // Verifică dacă utilizatorul este Administrator
+      if (currentUser.username !== "Administrator") {
+        return res.status(403).json({ 
+          message: "Acces interzis. Numai administratorii pot actualiza utilizatori." 
+        });
+      }
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ 
+          message: "ID-ul utilizatorului trebuie să fie un număr." 
+        });
+      }
+      
+      const { username, email, isSubscribed } = req.body;
+      
+      if (!username || !email) {
+        return res.status(400).json({ 
+          message: "Numele de utilizator și email-ul sunt obligatorii." 
+        });
+      }
+      
+      // Verifică dacă utilizatorul există
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ 
+          message: `Utilizatorul cu ID-ul ${userId} nu a fost găsit.` 
+        });
+      }
+      
+      // Verifică dacă email-ul este deja folosit de alt utilizator
+      if (email !== existingUser.email) {
+        const userWithSameEmail = await storage.getUserByEmail(email);
+        if (userWithSameEmail && userWithSameEmail.id !== userId) {
+          return res.status(400).json({ 
+            message: `Email-ul ${email} este deja folosit de alt utilizator.` 
+          });
+        }
+      }
+      
+      // Actualizează datele utilizatorului
+      let updatedUser = existingUser;
+      
+      // Actualizează numele de utilizator și email-ul (dacă s-au schimbat)
+      if (username !== existingUser.username || email !== existingUser.email) {
+        // Folosim noua metodă updateUserDetails
+        updatedUser = await storage.updateUserDetails(userId, { username, email });
+      }
+      
+      // Actualizează statusul de abonare dacă s-a schimbat
+      if (isSubscribed !== undefined && isSubscribed !== existingUser.isSubscribed) {
+        updatedUser = await storage.updateUserSubscription(userId, isSubscribed);
+      }
+      
+      return res.status(200).json({
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        isSubscribed: updatedUser.isSubscribed
+      });
+      
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return res.status(500).json({ 
+        message: "A apărut o eroare la actualizarea utilizatorului." 
+      });
+    }
+  });
+  
   // Delete user by email (admin only)
   app.delete("/api/admin/users", isAuthenticated, async (req: Request, res: Response) => {
     try {
