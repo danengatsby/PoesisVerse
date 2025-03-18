@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 
 interface StripePaymentFormProps {
   clientSecret: string;
-  plan: { type: string; price: string; priceId: string }; // Keeping priceId for backward compatibility but we don't use it
+  plan: { type: string; price: string; priceId: string; duration: string };
   stripePromise: ReturnType<typeof loadStripe>;
   refreshSubscription: () => void;
   onCancel: () => void;

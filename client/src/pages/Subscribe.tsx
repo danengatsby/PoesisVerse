@@ -29,7 +29,7 @@ try {
 export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(true);
-  const [selectedPlan, setSelectedPlan] = useState<{ type: string, price: string, priceId: string } | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<{ type: string, price: string, priceId: string, duration: string } | null>(null);
   const { toast } = useToast();
   const { isAuthenticated, isLoading, refreshSubscription } = useAuth();
   const [location, setLocation] = useLocation();
@@ -64,7 +64,8 @@ export default function Subscribe() {
     setSelectedPlan({
       type: planType === 'monthly' ? 'Monthly' : 'Annual',
       price: planType === 'monthly' ? '$5.99/month' : '$49.99/year',
-      priceId: planType
+      priceId: planType,
+      duration: planType === 'monthly' ? '1 month' : '1 year'
     });
     
     setShowPlanModal(false);

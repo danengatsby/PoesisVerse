@@ -839,7 +839,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Plan normalizat: "${normalizedPlanType}" (original "${planType}")`);
       
       
-      // Update user subscription status
+      // Update user subscription status with dates
+      // Calculăm data de expirare a abonamentului
+      const currentDate = new Date();
+      const subscriptionEndDate = new Date(currentDate);
+      
+      // Adăugăm perioada corectă în funcție de tipul de abonament
+      if (normalizedPlanType === 'annual') {
+        subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1); // 1 an
+      } else {
+        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1); // 1 lună
+      }
+      
+      console.log(`Abonament activat pentru utilizatorul ${user.username}`);
+      console.log(`Data începerii: ${currentDate.toISOString()}`);
+      console.log(`Data expirării: ${subscriptionEndDate.toISOString()}`);
+      
       const updatedUser = await storage.updateUserSubscription(user.id, true);
       
       // Pregătim detaliile facturii
@@ -995,6 +1010,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Update user subscription status directly
+            // Calculăm data de expirare pentru abonamentul webhook
+            const currentDateWebhook = new Date();
+            const subscriptionEndDateWebhook = new Date(currentDateWebhook);
+            
+            if (subscriptionType === 'annual') {
+              subscriptionEndDateWebhook.setFullYear(subscriptionEndDateWebhook.getFullYear() + 1);
+            } else {
+              subscriptionEndDateWebhook.setMonth(subscriptionEndDateWebhook.getMonth() + 1);
+            }
+            
+            console.log(`Webhook: Abonament activat pentru utilizatorul ${user.username}`);
+            console.log(`Webhook: Data începerii: ${currentDateWebhook.toISOString()}`);
+            console.log(`Webhook: Data expirării: ${subscriptionEndDateWebhook.toISOString()}`);
+            
             await storage.updateUserSubscription(user.id, true);
             
             console.log(`User ${userId} ${subscriptionType} subscription activated through direct payment`);
