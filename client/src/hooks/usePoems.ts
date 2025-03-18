@@ -26,12 +26,13 @@ export function usePoems() {
   const { data: poems, isLoading: isLoadingPoems, refetch: refetchPoems } = useQuery({
     queryKey: ["/api/poems"],
     queryFn: async () => {
-      const response = await fetch("/api/poems");
+      const response = await apiRequest("GET", "/api/poems");
       if (!response.ok) {
         throw new Error("Failed to fetch poems");
       }
       return response.json() as Promise<Poem[]>;
     },
+    staleTime: 30000, // Consideră datele valabile timp de 30 secunde pentru a reduce numărul de cereri
   });
 
   // Fetch a specific poem
@@ -41,13 +42,14 @@ export function usePoems() {
       const poemId = queryKey[1];
       if (!poemId) return null;
       
-      const response = await fetch(`/api/poems/${poemId}`);
+      const response = await apiRequest("GET", `/api/poems/${poemId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch poem");
       }
       return response.json() as Promise<Poem>;
     },
     enabled: !!selectedPoemId,
+    staleTime: 30000,
   });
 
   // Fetch related poems
@@ -57,13 +59,14 @@ export function usePoems() {
       const poemId = queryKey[1];
       if (!poemId) return [];
       
-      const response = await fetch(`/api/poems/${poemId}/related`);
+      const response = await apiRequest("GET", `/api/poems/${poemId}/related`);
       if (!response.ok) {
         throw new Error("Failed to fetch related poems");
       }
       return response.json() as Promise<Poem[]>;
     },
     enabled: !!selectedPoemId,
+    staleTime: 30000,
   });
 
   // Bookmark a poem

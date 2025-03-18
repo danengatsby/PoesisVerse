@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { usePoems } from "@/hooks/usePoems";
 
 import {
   Form,
@@ -50,6 +51,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function AddPoem() {
   const { isAuthenticated } = useAuth();
+  const { refetchPoems } = usePoems(); // Adăugăm refetchPoems pentru a reîmprospăta lista
   const [isPending, setIsPending] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -182,6 +184,9 @@ export default function AddPoem() {
       const response = await apiRequest("POST", "/api/poems", dataToSend);
       
       if (response.ok) {
+        // Actualizăm lista de poeme
+        await refetchPoems();
+        
         toast({
           title: "Poem adăugat",
           description: "Poemul a fost adăugat cu succes!",
