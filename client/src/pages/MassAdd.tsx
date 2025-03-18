@@ -91,7 +91,7 @@ export default function MassAdd() {
       };
 
       // Trimite cererea către server pentru adăugarea în masă a poemelor
-      const response = await apiRequest("POST", "/api/poems/mass-add", {
+      const response = await apiRequest("POST", "/api/mass-add-poems", {
         poems,
         metadata: commonMetadata,
       });
