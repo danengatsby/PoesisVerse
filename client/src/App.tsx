@@ -162,9 +162,13 @@ const ProtectedRoute = ({ path, children }: { path: string, children: React.Reac
 };
 
 // Wrapper component to provide match prop to any component
-const WithMatch = ({ children }: { children: React.ReactNode }) => {
+const WithMatch = ({ children, path, params }: { 
+  children: React.ReactNode,
+  path?: string,
+  params?: Record<string, string>
+}) => {
   // Create a match object for compatibility with components expecting it
-  const matchProps = { match: { params: {} } };
+  const matchProps = { match: { params: params || {} } };
   
   // We need to clone the child element and add the match prop
   return (
@@ -203,11 +207,15 @@ const Router = () => {
         </WithMatch>
       </ProtectedRoute>
       
-      <ProtectedRoute path="/edit-poem/:id">
-        <WithMatch>
-          <AddPoem />
-        </WithMatch>
-      </ProtectedRoute>
+      <Route path="/edit-poem/:id">
+        {(params) => (
+          <ProtectedRoute path="/edit-poem/:id">
+            <WithMatch params={params}>
+              <AddPoem />
+            </WithMatch>
+          </ProtectedRoute>
+        )}
+      </Route>
       
       <ProtectedRoute path="/subscribers">
         <WithMatch>

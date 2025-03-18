@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { usePoems } from "@/hooks/usePoems";
+import { Loader2 } from "lucide-react";
 
 import {
   Form,
@@ -169,6 +170,21 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
     }
   };
   
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      author: "",
+      description: "",
+      year: "",
+      category: "",
+      isPremium: false,
+      imageUrl: "",
+      audioUrl: "",
+    },
+  });
+
   // Încărcăm datele poemului în caz că suntem în modul de editare
   useEffect(() => {
     if (isEditMode && poemId) {
@@ -226,27 +242,12 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
     }
   }, [isEditMode, poemId, form, toast, setLocation]);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      content: "",
-      author: "",
-      description: "",
-      year: "",
-      category: "",
-      isPremium: false,
-      imageUrl: "",
-      audioUrl: "",
-    },
-  });
-
   async function onSubmit(values: FormValues) {
     if (!isAuthenticated) {
       toast({
         variant: "destructive",
         title: "Trebuie să fiți autentificat",
-        description: "Vă rugăm să vă autentificați pentru a adăuga un poem nou.",
+        description: "Vă rugăm să vă autentificați pentru a adăuga sau edita un poem.",
       });
       return;
     }
@@ -261,35 +262,57 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
         audioUrl: values.audioUrl || "",
       };
       
-      const response = await apiRequest("POST", "/api/poems", dataToSend);
+      let response;
+      
+      if (isEditMode && poemId) {
+        // Actualizăm poemul existent
+        response = await apiRequest("PUT", `/api/poems/${poemId}`, dataToSend);
+      } else {
+        // Adăugăm un poem nou
+        response = await apiRequest("POST", "/api/poems", dataToSend);
+      }
       
       if (response.ok) {
         // Actualizăm lista de poeme
         await refetchPoems();
         
         toast({
-          title: "Poem adăugat",
-          description: "Poemul a fost adăugat cu succes!",
+          title: isEditMode ? "Poem actualizat" : "Poem adăugat",
+          description: isEditMode 
+            ? "Poemul a fost actualizat cu succes!" 
+            : "Poemul a fost adăugat cu succes!",
         });
         setLocation("/");
       } else {
         const error = await response.json();
-        throw new Error(error.message || "A apărut o eroare la adăugarea poemului");
+        throw new Error(error.message || `A apărut o eroare la ${isEditMode ? 'actualizarea' : 'adăugarea'} poemului`);
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Eroare",
-        description: error.message || "A apărut o eroare la adăugarea poemului",
+        description: error.message || `A apărut o eroare la ${isEditMode ? 'actualizarea' : 'adăugarea'} poemului`,
       });
     } finally {
       setIsPending(false);
     }
   }
 
+  // Afișăm un indicator de încărcare în timp ce încărcăm datele poemului pentru editare
+  if (isLoading) {
+    return (
+      <div className="container max-w-3xl py-10 flex flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg">Se încarcă datele poemului...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-3xl py-10">
-      <h1 className="text-3xl font-bold mb-6">Adăugare poem nou</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        {isEditMode ? 'Editare poem' : 'Adăugare poem nou'}
+      </h1>
       <Separator className="mb-8" />
 
       <Form {...form}>
@@ -512,7 +535,10 @@ export default function AddPoem({ match }: { match?: { params: Record<string, st
               Anulare
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Se adaugă..." : "Adaugă poem"}
+              {isPending 
+                ? (isEditMode ? "Se actualizează..." : "Se adaugă...") 
+                : (isEditMode ? "Actualizează poem" : "Adaugă poem")
+              }
             </Button>
           </div>
         </form>
