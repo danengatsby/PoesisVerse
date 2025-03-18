@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { useRouter, Link } from "@/lib/SimpleRouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import LoginModal from "./auth/LoginModal";
