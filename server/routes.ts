@@ -431,8 +431,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Create subscription with Stripe
   app.post("/api/create-subscription", isAuthenticated, async (req: Request, res: Response) => {
+    // Check if Stripe is properly configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('Missing Stripe secret key configuration');
+      return res.status(500).json({ 
+        message: 'Stripe is not configured properly',
+        details: 'Missing Stripe API keys. Please contact the administrator.'
+      });
+    }
+    
     if (!stripe) {
-      return res.status(500).json({ message: 'Stripe is not configured' });
+      console.error('Stripe client not initialized');
+      return res.status(500).json({ 
+        message: 'Stripe service unavailable',
+        details: 'Payment processing is currently unavailable. Please try again later.'
+      });
     }
     
     try {
@@ -443,6 +456,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Price ID is required' });
       }
       
+      // For development, provide fixed pricing based on plan type if price IDs aren't real
+      let amount = 0;
+      if (priceId === 'price_monthly' || priceId.includes('monthly')) {
+        amount = 599; // $5.99
+      } else if (priceId === 'price_annual' || priceId.includes('annual')) {
+        amount = 4999; // $49.99
+      } else {
+        // Try to use the actual price ID from Stripe
+        try {
+          const price = await stripe.prices.retrieve(priceId);
+          amount = price.unit_amount || 999;
+        } catch (priceError) {
+          console.warn(`Could not retrieve price for ID ${priceId}, using default amount`, priceError);
+          amount = 999; // Default to $9.99 if we can't determine
+        }
+      }
+      
       // Create or get Stripe customer
       let customerId = user.stripeCustomerId;
       
@@ -450,6 +480,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const customer = await stripe.customers.create({
           email: user.email,
           name: user.username,
+          metadata: {
+            userId: user.id.toString()
+          }
         });
         
         customerId = customer.id;
@@ -463,25 +496,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create a subscription payment intent directly
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: priceId === 'price_monthly' ? 599 : 4999, // $5.99 or $49.99 in cents
+        amount: amount,
         currency: 'usd',
         customer: customerId,
         setup_future_usage: 'off_session',
         metadata: {
           priceId,
-          userId: user.id.toString()
+          userId: user.id.toString(),
+          productName: priceId.includes('monthly') ? 'Monthly Subscription' : 'Annual Subscription'
         }
       });
       
       return res.status(200).json({
         clientSecret: paymentIntent.client_secret,
+        amount: amount / 100, // Return the amount in dollars for display
+        planType: priceId.includes('monthly') ? 'monthly' : 'annual'
       });
     } catch (error: any) {
       console.error('Error creating subscription:', error);
-      return res.status(400).json({ 
-        message: 'Failed to create subscription', 
-        error: error.message 
-      });
+      
+      // Provide more specific error messages based on the error type
+      if (error.type === 'StripeAuthenticationError') {
+        return res.status(500).json({ 
+          message: 'Failed to create subscription', 
+          error: 'Authentication with payment provider failed. Please contact support.'
+        });
+      } else if (error.type === 'StripeInvalidRequestError') {
+        return res.status(400).json({ 
+          message: 'Failed to create subscription', 
+          error: 'Invalid request to payment provider. Please try again.'
+        });
+      } else {
+        return res.status(500).json({ 
+          message: 'Failed to create subscription', 
+          error: error.message || 'An unexpected error occurred'
+        });
+      }
     }
   });
   

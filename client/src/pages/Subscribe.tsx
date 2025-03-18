@@ -7,12 +7,23 @@ import Header from "@/components/Header";
 import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, ArrowLeft } from "lucide-react";
+import { CheckIcon, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-// Load Stripe outside of component render for better performance
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// Try to load Stripe outside of component render for better performance
+let stripePromise: ReturnType<typeof loadStripe> | null = null;
+
+try {
+  if (import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  } else {
+    console.warn('Missing Stripe public key. Stripe functionality will not work.');
+  }
+} catch (error) {
+  console.error('Error initializing Stripe:', error);
+}
 
 const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId: string } }) => {
   const stripe = useStripe();
@@ -217,93 +228,151 @@ export default function Subscribe() {
             </CardHeader>
             
             <CardContent>
-              {!selectedPlan ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Monthly plan */}
-                  <div className="border border-neutral-200 rounded-lg overflow-hidden hover:shadow-medium transition-shadow">
-                    <div className="p-6 bg-secondary/10">
-                      <h3 className="font-heading font-semibold text-lg mb-1">Monthly</h3>
-                      <div className="flex items-end mb-3">
-                        <span className="text-3xl font-bold">$5.99</span>
-                        <span className="text-neutral-600 ml-1">/month</span>
-                      </div>
-                      <p className="text-sm text-neutral-600">Billed monthly, cancel anytime.</p>
-                    </div>
-                    <div className="p-6">
-                      <ul className="space-y-3">
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>Full access to all poems</span>
-                        </li>
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>High-resolution images</span>
-                        </li>
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>No advertisements</span>
-                        </li>
-                      </ul>
-                      <Button 
-                        className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
-                        onClick={() => handleSelectPlan('monthly', monthlyPriceId)}
-                      >
-                        Subscribe Monthly
-                      </Button>
-                    </div>
-                  </div>
+              {!stripePromise ? (
+                <div className="py-4">
+                  <Alert variant="destructive" className="mb-8">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Subscription Service Unavailable</AlertTitle>
+                    <AlertDescription>
+                      Our payment system is currently unavailable. Please try again later or contact support.
+                    </AlertDescription>
+                  </Alert>
                   
-                  {/* Annual plan */}
-                  <div className="border-2 border-primary rounded-lg overflow-hidden relative hover:shadow-medium transition-shadow">
-                    <div className="absolute top-0 right-0 bg-primary text-white text-xs py-1 px-3 rounded-bl-lg font-medium">
-                      Best Value
-                    </div>
-                    <div className="p-6 bg-secondary/10">
-                      <h3 className="font-heading font-semibold text-lg mb-1">Annual</h3>
-                      <div className="flex items-end mb-3">
-                        <span className="text-3xl font-bold">$49.99</span>
-                        <span className="text-neutral-600 ml-1">/year</span>
-                      </div>
-                      <p className="text-sm text-neutral-600">Save $21.89 compared to monthly plan.</p>
-                    </div>
-                    <div className="p-6">
-                      <ul className="space-y-3">
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>Full access to all poems</span>
-                        </li>
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>High-resolution images</span>
-                        </li>
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>No advertisements</span>
-                        </li>
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>Download poems as PDF</span>
-                        </li>
-                        <li className="flex items-start">
-                          <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
-                          <span>Early access to new content</span>
-                        </li>
-                      </ul>
-                      <Button 
-                        className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
-                        onClick={() => handleSelectPlan('annual', annualPriceId)}
-                      >
-                        Subscribe Annually
-                      </Button>
-                    </div>
+                  <div className="text-center">
+                    <p className="mb-4">Unable to load subscription options due to configuration issues.</p>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setLocation('/')}
+                      className="mx-auto"
+                    >
+                      Return to Home
+                    </Button>
                   </div>
                 </div>
+              ) : !selectedPlan ? (
+                <>
+                  <div className="mb-8">
+                    <h3 className="font-heading text-xl mb-2">Choose Your Subscription Plan</h3>
+                    <p className="text-neutral-600">Get unlimited access to all our premium poetry content.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Monthly plan */}
+                    <div className="border border-neutral-200 rounded-lg overflow-hidden hover:shadow-medium transition-shadow">
+                      <div className="p-6 bg-secondary/10">
+                        <h3 className="font-heading font-semibold text-lg mb-1">Monthly</h3>
+                        <div className="flex items-end mb-3">
+                          <span className="text-3xl font-bold">$5.99</span>
+                          <span className="text-neutral-600 ml-1">/month</span>
+                        </div>
+                        <p className="text-sm text-neutral-600">Billed monthly, cancel anytime.</p>
+                      </div>
+                      <div className="p-6">
+                        <ul className="space-y-3">
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>Full access to all poems</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>High-resolution images</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>No advertisements</span>
+                          </li>
+                        </ul>
+                        <Button 
+                          className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
+                          onClick={() => handleSelectPlan('monthly', monthlyPriceId)}
+                        >
+                          Subscribe Monthly
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Annual plan */}
+                    <div className="border-2 border-primary rounded-lg overflow-hidden relative hover:shadow-medium transition-shadow">
+                      <div className="absolute top-0 right-0 bg-primary text-white text-xs py-1 px-3 rounded-bl-lg font-medium">
+                        Best Value
+                      </div>
+                      <div className="p-6 bg-secondary/10">
+                        <h3 className="font-heading font-semibold text-lg mb-1">Annual</h3>
+                        <div className="flex items-end mb-3">
+                          <span className="text-3xl font-bold">$49.99</span>
+                          <span className="text-neutral-600 ml-1">/year</span>
+                        </div>
+                        <p className="text-sm text-neutral-600">Save $21.89 compared to monthly plan.</p>
+                      </div>
+                      <div className="p-6">
+                        <ul className="space-y-3">
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>Full access to all poems</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>High-resolution images</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>No advertisements</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>Download poems as PDF</span>
+                          </li>
+                          <li className="flex items-start">
+                            <CheckIcon className="text-accent h-5 w-5 mt-0.5 mr-3" />
+                            <span>Early access to new content</span>
+                          </li>
+                        </ul>
+                        <Button 
+                          className="w-full mt-6 bg-primary hover:bg-primary-dark text-white"
+                          onClick={() => handleSelectPlan('annual', annualPriceId)}
+                        >
+                          Subscribe Annually
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <>
                   {selectedPlan && clientSecret && stripePromise ? (
                     <Elements stripe={stripePromise} options={{ clientSecret }}>
                       <SubscribeForm plan={selectedPlan} />
                     </Elements>
+                  ) : selectedPlan && !clientSecret ? (
+                    <div className="py-6">
+                      <Alert variant="destructive" className="mb-4">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Payment System Error</AlertTitle>
+                        <AlertDescription>
+                          We're having trouble connecting to our payment system. This may be due to configuration issues.
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <div className="flex justify-between mt-6">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setSelectedPlan(null); 
+                            setShowPlanModal(true);
+                          }}
+                        >
+                          <ArrowLeft className="w-4 h-4 mr-2" />
+                          Back to Plans
+                        </Button>
+                        
+                        <Button 
+                          variant="default" 
+                          onClick={() => setLocation('/')}
+                        >
+                          Return to Home
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-center py-8">
                       <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
