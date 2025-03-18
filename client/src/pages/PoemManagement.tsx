@@ -139,23 +139,32 @@ export default function PoemManagement() {
     } else {
       // Procesare fișier audio
       try {
-        // Pentru fisierul audio, stocăm URL-ul pentru a-l putea trimite la server
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            const audioUrl = event.target.result as string;
-            setAudioFile(file);
-            setAudioName(file.name);
-            
-            // Actualizăm formularul în funcție de context (adăugare sau editare)
-            if (isEdit) {
-              setEditPoem({ ...editPoem, audioUrl: audioUrl });
+        // Transformăm citirea fișierului audio într-o promisiune pentru a o face sincronă
+        const audioUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              resolve(event.target.result as string);
             } else {
-              setNewPoem({ ...newPoem, audioUrl: audioUrl });
+              reject(new Error('Failed to read audio file'));
             }
-          }
-        };
-        reader.readAsDataURL(file);
+          };
+          reader.onerror = () => reject(new Error('Error reading audio file'));
+          reader.readAsDataURL(file);
+        });
+        
+        // După ce am obținut URL-ul audio, actualizăm starea
+        setAudioFile(file);
+        setAudioName(file.name);
+        
+        // Actualizăm formularul în funcție de context (adăugare sau editare)
+        if (isEdit) {
+          console.log('Setting audio URL in edit mode:', audioUrl.substring(0, 50) + '...');
+          setEditPoem({ ...editPoem, audioUrl: audioUrl });
+        } else {
+          console.log('Setting audio URL in add mode:', audioUrl.substring(0, 50) + '...');
+          setNewPoem({ ...newPoem, audioUrl: audioUrl });
+        }
       } catch (error) {
         console.error('Eroare la încărcarea fișierului audio:', error);
         toast({
@@ -327,6 +336,7 @@ export default function PoemManagement() {
 
     try {
       setUpdatingPoem(true);
+      console.log('Sending poem update with audioUrl:', editPoem.audioUrl ? 'Audio URL present (length: ' + editPoem.audioUrl.length + ')' : 'No audio URL');
       const response = await apiRequest("PUT", `/api/poems/${currentEditPoemId}`, editPoem);
       
       if (response.ok) {
@@ -346,6 +356,7 @@ export default function PoemManagement() {
         });
       }
     } catch (error: any) {
+      console.error('Error updating poem:', error);
       toast({
         title: "Eroare la actualizare",
         description: error.message || "A apărut o eroare la actualizarea poemului.",
