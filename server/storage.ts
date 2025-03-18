@@ -39,6 +39,32 @@ export class MemStorage implements IStorage {
     this.poemIdCounter = 1;
     this.userPoemIdCounter = 1;
     
+    // Adăugăm un cont de test implicit care va fi disponibil mereu
+    const testUser: User = {
+      id: this.userIdCounter++,
+      username: "test",
+      email: "test@example.com",
+      password: "123456", // Aceasta ar trebui să fie criptată în producție
+      isSubscribed: false,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      createdAt: new Date(),
+    };
+    this.users.set(testUser.id, testUser);
+    
+    // Pentru a avea contul pe care l-ați creat
+    const savedUser: User = {
+      id: this.userIdCounter++,
+      username: "poet",
+      email: "danen53@gmail.com",
+      password: "123456", // Aceasta ar trebui să fie criptată în producție
+      isSubscribed: false,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      createdAt: new Date(),
+    };
+    this.users.set(savedUser.id, savedUser);
+    
     // Initialize with sample poems
     this.initializePoems();
   }
