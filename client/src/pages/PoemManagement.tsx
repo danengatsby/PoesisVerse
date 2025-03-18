@@ -49,6 +49,11 @@ export default function PoemManagement() {
   const [, navigate] = useLocation();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [audioName, setAudioName] = useState<string | null>(null);
+
   const [newPoem, setNewPoem] = useState<NewPoemFormData>({
     title: '',
     content: '',
