@@ -794,6 +794,13 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Poem with id ${id} not found`);
       }
       
+      // Verificăm dacă avem un audioUrl
+      if (poem.audioUrl) {
+        console.log(`Actualizare poem ${id} cu audioUrl prezent, lungime: ${poem.audioUrl.length}`);
+      } else {
+        console.log(`Actualizare poem ${id} fără audioUrl`);
+      }
+      
       // Actualizăm poemul
       const result = await this.db.update(poems)
         .set({
@@ -805,7 +812,8 @@ export class DatabaseStorage implements IStorage {
           description: poem.description,
           year: poem.year,
           category: poem.category,
-          isPremium: poem.isPremium
+          isPremium: poem.isPremium,
+          audioUrl: poem.audioUrl // Adăugat audioUrl la actualizare
         })
         .where(eq(poems.id, id))
         .returning();
