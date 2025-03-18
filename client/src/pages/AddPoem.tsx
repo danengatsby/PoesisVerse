@@ -40,12 +40,10 @@ const formSchema = z.object({
     message: "Vă rugăm să selectați o categorie.",
   }),
   isPremium: z.boolean().default(false),
-  imageUrl: z.string().url({
-    message: "Vă rugăm să introduceți un URL valid pentru imagine.",
-  }),
-  thumbnailUrl: z.string().url({
-    message: "Vă rugăm să introduceți un URL valid pentru miniatură.",
-  }),
+  imageUrl: z.string().optional(),
+  thumbnailUrl: z.string().optional(),
+  imageFile: z.any().optional(),
+  thumbnailFile: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,7 +53,39 @@ export default function AddPoem() {
   const [isPending, setIsPending] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // State pentru fișierele încărcate și preview-uri
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
+  // Funcție pentru gestionarea încărcării imagini
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'thumbnail') => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      
+      if (type === 'image') {
+        setImageFile(file);
+        setImagePreview(result);
+        // Actualizăm formularul cu baza64 pentru a putea fi trimis la server
+        form.setValue('imageUrl', result);
+      } else {
+        setThumbnailFile(file);
+        setThumbnailPreview(result);
+        form.setValue('thumbnailUrl', result);
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  };
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -83,7 +113,15 @@ export default function AddPoem() {
 
     setIsPending(true);
     try {
-      const response = await apiRequest("POST", "/api/poems", values);
+      // Dacă nu avem URL-uri pentru imagini, dar avem preview-uri, le folosim
+      const dataToSend = {
+        ...values,
+        // Dacă există preview, asigură-te că este trimis corespunzător
+        imageUrl: values.imageUrl || imagePreview || "",
+        thumbnailUrl: values.thumbnailUrl || thumbnailPreview || "",
+      };
+      
+      const response = await apiRequest("POST", "/api/poems", dataToSend);
       
       if (response.ok) {
         toast({
@@ -230,11 +268,35 @@ export default function AddPoem() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>URL Imagine</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/image.jpg" {...field} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input placeholder="https://example.com/image.jpg" {...field} />
+                    </FormControl>
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <div className="px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                        Încarcă
+                      </div>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'image')}
+                      />
+                    </label>
+                  </div>
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <p className="text-sm mb-1">Previzualizare:</p>
+                      <img 
+                        src={imagePreview} 
+                        alt="Previzualizare imagine" 
+                        className="max-w-full h-auto max-h-40 object-contain border rounded"
+                      />
+                    </div>
+                  )}
                   <FormDescription>
-                    URL-ul imaginii complete care va fi afișată cu poemul
+                    URL-ul imaginii sau încarcă de pe calculator
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -247,11 +309,35 @@ export default function AddPoem() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>URL Miniatură</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/thumbnail.jpg" {...field} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input placeholder="https://example.com/thumbnail.jpg" {...field} />
+                    </FormControl>
+                    <label htmlFor="thumbnail-upload" className="cursor-pointer">
+                      <div className="px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                        Încarcă
+                      </div>
+                      <input
+                        id="thumbnail-upload"
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'thumbnail')}
+                      />
+                    </label>
+                  </div>
+                  {thumbnailPreview && (
+                    <div className="mt-2">
+                      <p className="text-sm mb-1">Previzualizare:</p>
+                      <img 
+                        src={thumbnailPreview} 
+                        alt="Previzualizare miniatură" 
+                        className="max-w-full h-auto max-h-40 object-contain border rounded"
+                      />
+                    </div>
+                  )}
                   <FormDescription>
-                    URL-ul miniaturii care va fi afișată în lista de poeme
+                    URL-ul miniaturii sau încarcă de pe calculator
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
