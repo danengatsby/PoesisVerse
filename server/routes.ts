@@ -95,17 +95,31 @@ async function sendWelcomeEmail(user: User): Promise<void> {
 }
 
 // Funcție pentru email de confirmare a abonamentului
-async function sendSubscriptionEmail(user: User): Promise<void> {
-  console.log("Trimitere email de confirmare pentru utilizator:", { 
-    email: user.email, 
-    username: user.username 
-  });
+async function sendSubscriptionEmail(user: User, planType: 'monthly' | 'annual' = 'monthly'): Promise<void> {
+  console.log(`Trimitere email de confirmare abonament ${planType} pentru:`, user.email);
+  
+  // Informații specifice tipului de abonament
+  let planInfo = {
+    title: 'Abonament Lunar Premium',
+    price: '$5.99/lună',
+    renewalInfo: 'Abonamentul tău se va reînnoi automat la fiecare lună.',
+    duration: 'o lună'
+  };
+  
+  if (planType === 'annual') {
+    planInfo = {
+      title: 'Abonament Anual Premium',
+      price: '$49.99/an',
+      renewalInfo: 'Abonamentul tău se va reînnoi automat în fiecare an.',
+      duration: 'un an'
+    };
+  }
   
   // Template email pentru utilizator nou abonat
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: user.email,
-    subject: 'Confirmare abonament PoesisVerse Premium',
+    subject: `Confirmare ${planInfo.title} - PoesisVerse`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
         <div style="text-align: center; margin-bottom: 20px;">
@@ -115,8 +129,8 @@ async function sendSubscriptionEmail(user: User): Promise<void> {
         
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
           <h2 style="color: #1f2937; margin-top: 0;">Felicitări, ${user.username}!</h2>
-          <p style="color: #4b5563; font-size: 16px;">Abonamentul tău Premium a fost activat cu succes.</p>
-          <p style="color: #4b5563; font-size: 16px;">Acum ai acces la întreaga noastră colecție de poezii premium și la toate caracteristicile platformei.</p>
+          <p style="color: #4b5563; font-size: 16px;">Ai achiziționat cu succes <strong>${planInfo.title}</strong> la prețul de <strong>${planInfo.price}</strong>.</p>
+          <p style="color: #4b5563; font-size: 16px;">Începând de acum, ai acces la toate funcționalitățile premium pentru următoarea ${planInfo.duration}.</p>
         </div>
         
         <div style="margin-bottom: 20px;">
@@ -127,6 +141,17 @@ async function sendSubscriptionEmail(user: User): Promise<void> {
             <li>Conținut exclusiv actualizat regulat</li>
             <li>Suport prioritar</li>
           </ul>
+        </div>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+          <h3 style="color: #1f2937; margin-top: 0;">Detalii abonament</h3>
+          <p style="color: #4b5563; font-size: 16px;">
+            <strong>Tip abonament:</strong> ${planInfo.title}<br>
+            <strong>Preț:</strong> ${planInfo.price}<br>
+            <strong>Dată activare:</strong> ${new Date().toLocaleDateString()}<br>
+            <strong>Status:</strong> Activ
+          </p>
+          <p style="color: #4b5563; font-size: 16px;">${planInfo.renewalInfo}</p>
         </div>
         
         <div style="text-align: center;">
@@ -730,14 +755,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/mark-subscription-success", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
+      const { planType = 'monthly' } = req.body; // Get plan type from request body
+      
+      // Validate planType
+      if (planType !== 'monthly' && planType !== 'annual') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid plan type. Must be "monthly" or "annual".'
+        });
+      }
       
       // Update user subscription status
       const updatedUser = await storage.updateUserSubscription(user.id, true);
       
-      // Send email confirmation
+      // Send email confirmation with plan type
       try {
-        await sendSubscriptionEmail(updatedUser);
-        console.log('Subscription confirmation email sent successfully for:', updatedUser.email);
+        await sendSubscriptionEmail(updatedUser, planType);
+        console.log(`${planType} subscription confirmation email sent successfully for:`, updatedUser.email);
       } catch (emailError: any) {
         console.error('Error sending subscription confirmation email:', emailError);
         // Don't return an error, continue with subscription success
@@ -746,6 +780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).json({ 
         success: true, 
         message: 'Subscription activated successfully', 
+        planType: planType,
         user: {
           id: updatedUser.id,
           username: updatedUser.username,
