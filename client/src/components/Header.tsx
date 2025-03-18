@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { useRouter, Link } from "@/lib/SimpleRouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CrownIcon, PlusCircleIcon, LogOutIcon, MenuIcon } from "lucide-react";
 import LoginModal from "./auth/LoginModal";
 import SignupModal from "./auth/SignupModal";
 
 export default function Header() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, isSubscribed } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+  const [, setLocation] = useLocation();
 
   const toggleMobileMenu = () => {
     setShowMobileMenu(!showMobileMenu);
@@ -32,6 +35,11 @@ export default function Header() {
     setShowMobileMenu(false);
   };
 
+  const navigateToSubscribe = () => {
+    setLocation("/subscribe");
+    setShowMobileMenu(false);
+  };
+
   return (
     <>
       <header className="bg-white shadow-md border-b border-neutral-200 sticky top-0 z-10">
@@ -46,25 +54,44 @@ export default function Header() {
             <div className="hidden md:flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
-                  <span className="text-sm text-neutral-600">
-                    Welcome, {user?.username}
-                  </span>
+                  <div className="flex items-center">
+                    <span className="text-sm text-neutral-600 mr-2">
+                      Bine ai venit, {user?.username}
+                    </span>
+                    {isSubscribed && (
+                      <Badge className="bg-amber-500" variant="secondary">
+                        <CrownIcon className="h-3 w-3 mr-1" />
+                        Premium
+                      </Badge>
+                    )}
+                  </div>
+                  
                   <Button variant="outline" className="mr-2" asChild>
                     <Link href="/add-poem">
+                      <PlusCircleIcon className="h-4 w-4 mr-1" />
                       Adăugare poem
                     </Link>
                   </Button>
+                  
+                  {!isSubscribed && (
+                    <Button variant="default" className="mr-2 bg-amber-500 hover:bg-amber-600" onClick={navigateToSubscribe}>
+                      <CrownIcon className="h-4 w-4 mr-1" />
+                      Abonare
+                    </Button>
+                  )}
+                  
                   <Button variant="ghost" onClick={handleLogout}>
-                    Log out
+                    <LogOutIcon className="h-4 w-4 mr-1" />
+                    Deconectare
                   </Button>
                 </>
               ) : (
                 <>
                   <Button variant="ghost" onClick={openLoginModal}>
-                    Log in
+                    Autentificare
                   </Button>
                   <Button className="bg-primary hover:bg-primary-dark text-white" onClick={openSignupModal}>
-                    Sign up
+                    Înregistrare
                   </Button>
                 </>
               )}
@@ -76,7 +103,7 @@ export default function Header() {
                 className="text-neutral-800"
                 aria-label="Toggle mobile menu"
               >
-                <i className="fas fa-bars text-xl"></i>
+                <MenuIcon className="h-6 w-6" />
               </button>
             </div>
           </div>
@@ -88,19 +115,39 @@ export default function Header() {
             <div className="px-4 space-y-2">
               {isAuthenticated ? (
                 <>
-                  <div className="px-4 py-2 text-sm text-neutral-600">
-                    Signed in as {user?.username}
+                  <div className="px-4 py-2 text-sm text-neutral-600 flex items-center">
+                    <span className="mr-2">Cont: {user?.username}</span>
+                    {isSubscribed && (
+                      <Badge className="bg-amber-500" variant="secondary">
+                        <CrownIcon className="h-3 w-3 mr-1" />
+                        Premium
+                      </Badge>
+                    )}
                   </div>
+                  
                   <Link href="/add-poem" className="block w-full">
-                    <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition">
+                    <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                      <PlusCircleIcon className="h-4 w-4 mr-2" />
                       Adăugare poem
                     </div>
                   </Link>
+                  
+                  {!isSubscribed && (
+                    <button 
+                      className="w-full text-left px-4 py-2 rounded-md bg-amber-500 text-white hover:bg-amber-600 transition flex items-center"
+                      onClick={navigateToSubscribe}
+                    >
+                      <CrownIcon className="h-4 w-4 mr-2" />
+                      Abonare
+                    </button>
+                  )}
+                  
                   <button 
-                    className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition"
+                    className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center"
                     onClick={handleLogout}
                   >
-                    Log out
+                    <LogOutIcon className="h-4 w-4 mr-2" />
+                    Deconectare
                   </button>
                 </>
               ) : (
@@ -109,13 +156,13 @@ export default function Header() {
                     className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition"
                     onClick={openLoginModal}
                   >
-                    Log in
+                    Autentificare
                   </button>
                   <button 
                     className="w-full text-left px-4 py-2 rounded-md bg-primary text-white hover:bg-primary-dark transition"
                     onClick={openSignupModal}
                   >
-                    Sign up
+                    Înregistrare
                   </button>
                 </>
               )}

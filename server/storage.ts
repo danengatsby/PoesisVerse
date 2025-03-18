@@ -119,7 +119,8 @@ export class MemStorage implements IStorage {
         description: "Written in 1895, this poem is a literary example of Victorian-era stoicism.",
         year: "1895",
         category: "Classic Poetry",
-        isPremium: true
+        isPremium: true,
+        createdAt: new Date()
       },
       {
         title: "Fire and Ice",
