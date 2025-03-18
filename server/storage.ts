@@ -107,7 +107,8 @@ export class MemStorage implements IStorage {
         description: "Published in 1916, this poem uses a road as a metaphor for the journey of life.",
         year: "1916",
         category: "Classic Poetry",
-        isPremium: false
+        isPremium: false,
+        createdAt: new Date()
       },
       {
         title: "If",

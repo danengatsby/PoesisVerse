@@ -121,7 +121,10 @@ export function useAuth() {
       return true;
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/users/profile"], null);
+      queryClient.setQueryData(["/api/auth/check"], { 
+        isAuthenticated: false, 
+        user: null 
+      });
       toast({
         title: "Logged out",
         description: "You have been logged out successfully",

@@ -370,7 +370,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/profile", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
-      return res.status(200).json(user);
+      // Return user without password
+      const { password, ...userWithoutPassword } = user;
+      return res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return res.status(500).json({ message: 'Failed to fetch user profile' });
