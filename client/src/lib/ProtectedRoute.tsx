@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   path: string;
-  component: React.ComponentType;
+  component: React.ComponentType<{ match?: { params: Record<string, string> } }>;
 }
 
 export function ProtectedRoute({ path, component: Component }: ProtectedRouteProps) {
@@ -34,5 +34,7 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
     return null;
   }
 
-  return <Component />;
+  // Create a match object for compatibility with wouter
+  const match = { params: {} };
+  return <Component match={match} />;
 }
