@@ -95,11 +95,6 @@ export default function Subscribers() {
     fetchSubscribers();
   }, [isAdmin, toast]);
 
-  // Dacă utilizatorul nu este Administrator, redirecționează la pagina principală
-  if (!isAdmin) {
-    return <Redirect to="/" />;
-  }
-
   // Formatare dată pentru afișare
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Nespecificat";
@@ -114,25 +109,27 @@ export default function Subscribers() {
   const handleAddUser = async () => {
     if (!newUser.username || !newUser.email || !newUser.password) {
       toast({
-        title: "Date incomplete",
-        description: "Vă rugăm să completați toate câmpurile obligatorii.",
+        title: "Câmpuri obligatorii",
+        description: "Te rugăm să completezi toate câmpurile obligatorii.",
         variant: "destructive",
       });
       return;
     }
 
+    setAddingUser(true);
     try {
-      setAddingUser(true);
       const response = await apiRequest("POST", "/api/admin/users", newUser);
-      
       if (response.ok) {
-        const addedUser = await response.json();
+        setShowAddDialog(false);
+        setNewUser({
+          username: '',
+          email: '',
+          password: ''
+        });
         toast({
           title: "Utilizator adăugat",
-          description: `Utilizatorul ${addedUser.username} a fost adăugat cu succes.`,
+          description: "Utilizatorul a fost adăugat cu succes!",
         });
-        setNewUser({ username: '', email: '', password: '' });
-        setShowAddDialog(false);
         fetchSubscribers();
       } else {
         const errorData = await response.json();
@@ -164,26 +161,24 @@ export default function Subscribers() {
   };
 
   const handleUpdateUser = async () => {
-    if (!currentEditUserId || !editUser.username || !editUser.email) {
+    if (!editUser.username || !editUser.email || currentEditUserId === null) {
       toast({
-        title: "Date incomplete",
-        description: "Vă rugăm să completați toate câmpurile obligatorii.",
+        title: "Câmpuri obligatorii",
+        description: "Te rugăm să completezi toate câmpurile obligatorii.",
         variant: "destructive",
       });
       return;
     }
 
+    setUpdatingUser(true);
     try {
-      setUpdatingUser(true);
       const response = await apiRequest("PUT", `/api/admin/users/${currentEditUserId}`, editUser);
-      
       if (response.ok) {
-        const updatedUser = await response.json();
+        setShowEditDialog(false);
         toast({
           title: "Utilizator actualizat",
-          description: `Utilizatorul ${updatedUser.username} a fost actualizat cu succes.`,
+          description: "Datele utilizatorului au fost actualizate cu succes!",
         });
-        setShowEditDialog(false);
         fetchSubscribers();
       } else {
         const errorData = await response.json();
@@ -205,15 +200,13 @@ export default function Subscribers() {
   };
 
   const handleDeleteUser = async (email: string) => {
+    setDeletingUser(true);
     try {
-      setDeletingUser(true);
-      const response = await apiRequest("DELETE", "/api/admin/users", { email });
-      
+      const response = await apiRequest("DELETE", `/api/admin/users`, { email });
       if (response.ok) {
-        const result = await response.json();
         toast({
           title: "Utilizator șters",
-          description: result.message || `Utilizatorul cu email-ul ${email} a fost șters cu succes.`,
+          description: "Utilizatorul a fost șters cu succes!",
         });
         fetchSubscribers();
       } else {
@@ -235,9 +228,13 @@ export default function Subscribers() {
     }
   };
 
+  if (!user || !user.isAdmin) {
+    return <Redirect to="/" />;
+  }
+  
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto py-4 px-4 h-screen flex flex-col">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
           <Button 
             onClick={() => navigate("/")} 
@@ -270,111 +267,113 @@ export default function Subscribers() {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full bg-white shadow-md rounded-lg overflow-hidden">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nume utilizator</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tip abonament</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data abonării</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data expirării</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acțiuni</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {subscribers.map((subscriber) => (
-                <tr key={subscriber.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{subscriber.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{subscriber.username}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">{subscriber.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      subscriber.isSubscribed 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {subscriber.isSubscribed ? 'Abonat' : 'Neabonat'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      subscriber.subscriptionType === 'anual' 
-                        ? 'bg-green-100 text-green-800' 
-                        : subscriber.subscriptionType === 'lunar'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {subscriber.subscriptionType === 'anual' 
-                        ? 'Anual' 
-                        : subscriber.subscriptionType === 'lunar'
-                        ? 'Lunar'
-                        : 'Nedeterminat'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(subscriber.subscribedAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(subscriber.subscriptionEndDate)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditUser(subscriber)}
-                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                    >
-                      <Pencil className="h-3.5 w-3.5 mr-1" />
-                      Editează
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <Trash className="h-3.5 w-3.5 mr-1" />
-                          Șterge
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Sunteți sigur că doriți să ștergeți utilizatorul {subscriber.username}? 
-                            Această acțiune nu poate fi anulată și toate datele asociate vor fi șterse.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Anulează</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDeleteUser(subscriber.email)}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            {deletingUser ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : (
-                              <Trash className="h-4 w-4 mr-2" />
-                            )}
-                            Șterge
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </td>
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+            <table className="w-full bg-white shadow-md rounded-lg">
+              <thead className="bg-gray-100 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nume utilizator</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tip abonament</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data abonării</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data expirării</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acțiuni</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {subscribers.map((subscriber) => (
+                  <tr key={subscriber.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{subscriber.id}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{subscriber.username}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-600">{subscriber.email}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        subscriber.isSubscribed 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {subscriber.isSubscribed ? 'Abonat' : 'Neabonat'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        subscriber.subscriptionType === 'anual' 
+                          ? 'bg-green-100 text-green-800' 
+                          : subscriber.subscriptionType === 'lunar'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {subscriber.subscriptionType === 'anual' 
+                          ? 'Anual' 
+                          : subscriber.subscriptionType === 'lunar'
+                          ? 'Lunar'
+                          : 'Nedeterminat'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(subscriber.subscribedAt)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(subscriber.subscriptionEndDate)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditUser(subscriber)}
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                        Editează
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <Trash className="h-3.5 w-3.5 mr-1" />
+                            Șterge
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Sunteți sigur că doriți să ștergeți utilizatorul {subscriber.username}? 
+                              Această acțiune nu poate fi anulată și toate datele asociate vor fi șterse.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Anulează</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteUser(subscriber.email)}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              {deletingUser ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              ) : (
+                                <Trash className="h-4 w-4 mr-2" />
+                              )}
+                              Șterge
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Dialog pentru adăugare utilizator */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adaugă utilizator nou</DialogTitle>
             <DialogDescription>
@@ -449,7 +448,7 @@ export default function Subscribers() {
 
       {/* Dialog pentru editare utilizator */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editează utilizator</DialogTitle>
             <DialogDescription>
