@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Pencil, Trash, Plus, X, Check, FileText, ArrowLeft } from "lucide-react";
+import { Loader2, Pencil, Trash, Plus, X, Check, FileText, ArrowLeft, Upload, Music } from "lucide-react";
 import { Redirect, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -53,6 +53,119 @@ export default function PoemManagement() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [audioName, setAudioName] = useState<string | null>(null);
+  
+  // Funcție pentru redimensionarea imaginilor înainte de încărcare
+  const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculăm noile dimensiuni păstrând raportul de aspect
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+          }
+          
+          // Creăm un canvas pentru redimensionare
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Desenăm imaginea redimensionată
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Nu s-a putut obține contextul canvas'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convertim canvas-ul în URL base64 cu compresie
+          const quality = 0.7; // Ajustează calitatea pentru a reduce dimensiunea
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+        img.onerror = () => {
+          reject(new Error('Eroare la încărcarea imaginii'));
+        };
+        if (event.target?.result) {
+          img.src = event.target.result as string;
+        }
+      };
+      reader.onerror = () => {
+        reject(new Error('Eroare la citirea fișierului'));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  
+  // Funcție pentru gestionarea încărcării fișierelor
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'audio', isEdit: boolean = false) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    
+    if (type === 'image') {
+      try {
+        // Redimensionăm imaginea
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+        
+        const resizedImageUrl = await resizeImage(file, maxWidth, maxHeight);
+        
+        setImageFile(file);
+        setImagePreview(resizedImageUrl);
+        
+        // Actualizăm formularul în funcție de context (adăugare sau editare)
+        if (isEdit) {
+          setEditPoem({ ...editPoem, imageUrl: resizedImageUrl });
+        } else {
+          setNewPoem({ ...newPoem, imageUrl: resizedImageUrl });
+        }
+      } catch (error) {
+        console.error('Eroare la redimensionarea imaginii:', error);
+        toast({
+          variant: "destructive",
+          title: "Eroare",
+          description: "Nu s-a putut procesa imaginea. Încercați altă imagine.",
+        });
+      }
+    } else {
+      // Procesare fișier audio
+      try {
+        // Pentru fisierul audio, stocăm URL-ul pentru a-l putea trimite la server
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            const audioUrl = event.target.result as string;
+            setAudioFile(file);
+            setAudioName(file.name);
+            
+            // Actualizăm formularul în funcție de context (adăugare sau editare)
+            if (isEdit) {
+              setEditPoem({ ...editPoem, audioUrl: audioUrl });
+            } else {
+              setNewPoem({ ...newPoem, audioUrl: audioUrl });
+            }
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Eroare la încărcarea fișierului audio:', error);
+        toast({
+          variant: "destructive",
+          title: "Eroare",
+          description: "Nu s-a putut procesa fișierul audio. Încercați alt fișier.",
+        });
+      }
+    }
+  };
 
   const [newPoem, setNewPoem] = useState<NewPoemFormData>({
     title: '',
