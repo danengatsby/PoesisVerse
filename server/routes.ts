@@ -5,6 +5,7 @@ import { z } from "zod";
 import Stripe from "stripe";
 import bcrypt from "bcryptjs";
 import session from "express-session";
+import createMemoryStore from "memorystore";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('Missing STRIPE_SECRET_KEY environment variable. Stripe functionality will not work.');
@@ -14,6 +15,9 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = process.env.STRIPE_SECRET_KEY 
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
+
+// Create a persistent memory store for sessions
+const MemoryStore = createMemoryStore(session);
 
 // Declare session properties on Request
 declare module 'express-session' {
@@ -26,8 +30,9 @@ declare module 'express-session' {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure session middleware for express
   app.use(session({
-    // Using memory store for development
-    // In production, we would use PostgreSQL
+    store: new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
     secret: process.env.SESSION_SECRET || 'poetrysecret123',
     resave: false,
     saveUninitialized: false,
