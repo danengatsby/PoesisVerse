@@ -79,7 +79,7 @@ export function useAuth() {
         return { isActive: false };
       }
     },
-    enabled: !!user && !!user.stripeSubscriptionId,
+    enabled: !!user,
   });
 
   // Login mutation
