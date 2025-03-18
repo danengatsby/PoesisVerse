@@ -450,28 +450,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const user = (req as any).user;
-      const { priceId } = req.body;
+      const { planType = 'monthly' } = req.body;
       
-      if (!priceId) {
-        return res.status(400).json({ message: 'Price ID is required' });
-      }
-      
-      // For development, provide fixed pricing based on plan type if price IDs aren't real
-      let amount = 0;
-      if (priceId === 'price_monthly' || priceId.includes('monthly')) {
-        amount = 599; // $5.99
-      } else if (priceId === 'price_annual' || priceId.includes('annual')) {
-        amount = 4999; // $49.99
-      } else {
-        // Try to use the actual price ID from Stripe
-        try {
-          const price = await stripe.prices.retrieve(priceId);
-          amount = price.unit_amount || 999;
-        } catch (priceError) {
-          console.warn(`Could not retrieve price for ID ${priceId}, using default amount`, priceError);
-          amount = 999; // Default to $9.99 if we can't determine
-        }
-      }
+      // Use fixed pricing based on plan type
+      const amount = planType === 'monthly' ? 599 : 4999; // $5.99 or $49.99
       
       // Create or get Stripe customer
       let customerId = user.stripeCustomerId;
@@ -494,41 +476,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create a subscription payment intent directly
+      // Create a payment intent directly
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'usd',
         customer: customerId,
-        setup_future_usage: 'off_session',
+        automatic_payment_methods: {
+          enabled: true,
+        },
         metadata: {
-          priceId,
           userId: user.id.toString(),
-          productName: priceId.includes('monthly') ? 'Monthly Subscription' : 'Annual Subscription'
+          planType: planType,
+          isSubscription: 'true',
+          productName: planType === 'monthly' ? 'Monthly Subscription' : 'Annual Subscription'
         }
       });
       
       return res.status(200).json({
         clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
         amount: amount / 100, // Return the amount in dollars for display
-        planType: priceId.includes('monthly') ? 'monthly' : 'annual'
+        planType: planType
       });
     } catch (error: any) {
-      console.error('Error creating subscription:', error);
+      console.error('Error creating payment:', error);
       
       // Provide more specific error messages based on the error type
       if (error.type === 'StripeAuthenticationError') {
         return res.status(500).json({ 
-          message: 'Failed to create subscription', 
+          message: 'Failed to create payment', 
           error: 'Authentication with payment provider failed. Please contact support.'
         });
       } else if (error.type === 'StripeInvalidRequestError') {
         return res.status(400).json({ 
-          message: 'Failed to create subscription', 
+          message: 'Failed to create payment', 
           error: 'Invalid request to payment provider. Please try again.'
         });
       } else {
         return res.status(500).json({ 
-          message: 'Failed to create subscription', 
+          message: 'Failed to create payment', 
           error: error.message || 'An unexpected error occurred'
         });
       }
@@ -625,9 +611,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const paymentIntent = event.data.object;
           console.log(`PaymentIntent succeeded: ${paymentIntent.id}`);
           
-          // If this payment was for a subscription, create the subscription
-          if (paymentIntent.metadata && paymentIntent.metadata.userId && paymentIntent.metadata.priceId) {
-            const { userId, priceId } = paymentIntent.metadata;
+          // If this payment was for a subscription plan
+          if (paymentIntent.metadata && paymentIntent.metadata.userId && paymentIntent.metadata.isSubscription === 'true') {
+            const { userId } = paymentIntent.metadata;
             
             // Get the user
             const user = await storage.getUser(parseInt(userId));
@@ -637,25 +623,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               break;
             }
             
-            // Verify customer ID exists
-            if (!user.stripeCustomerId) {
-              console.error(`User ${userId} has no Stripe customer ID`);
-              break;
-            }
+            // Update user subscription status directly
+            await storage.updateUserSubscription(user.id, true);
             
-            // Create a subscription with Stripe
-            const subscription = await stripe.subscriptions.create({
-              customer: user.stripeCustomerId,
-              items: [{ price: priceId }],
-            });
-            
-            // Update user with subscription ID
-            await storage.updateUserStripeInfo(user.id, {
-              stripeCustomerId: user.stripeCustomerId,
-              stripeSubscriptionId: subscription.id
-            });
-            
-            console.log(`Subscription created: ${subscription.id} for user ${userId}`);
+            console.log(`User ${userId} subscription activated through direct payment`);
           }
           break;
           
