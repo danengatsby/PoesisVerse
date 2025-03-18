@@ -8,7 +8,7 @@ import SubscriptionModal from "@/components/subscription/SubscriptionModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, ArrowLeft } from "lucide-react";
-import { Link, useRouter } from "@/lib/SimpleRouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 
 // Load Stripe outside of component render for better performance
@@ -19,7 +19,7 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   const elements = useElements();
   const { toast } = useToast();
   const { refreshSubscription } = useAuth();
-  const router = useRouter();
+  const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +59,7 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
         
         // Redirect to home page after successful payment
         setTimeout(() => {
-          router.navigate('/?subscription=success');
+          setLocation('/?subscription=success');
         }, 1500);
       }
     } catch (error: any) {
@@ -117,19 +117,18 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   );
 };
 
-export default function Subscribe({ match }: { match?: { params: Record<string, string> } }) {
+export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<{ type: string, price: string, priceId: string } | null>(null);
   const { toast } = useToast();
   const { isAuthenticated, isLoading, refreshSubscription } = useAuth();
-  const router = useRouter();
+  const [location, setLocation] = useLocation();
   
   // Check for successful subscription return from Stripe
   useEffect(() => {
     // Check for subscription status in URL
-    const currentPath = router.path;
-    if (currentPath.includes('subscription=success')) {
+    if (location.includes('subscription=success')) {
       toast({
         title: "Subscription Active",
         description: "Thank you for subscribing to PoesisVerse!",
@@ -139,9 +138,9 @@ export default function Subscribe({ match }: { match?: { params: Record<string, 
       refreshSubscription();
       
       // Clear URL parameter by navigating to the base path without the query
-      router.navigate(router.path.split('?')[0]);
+      setLocation(location.split('?')[0]);
     }
-  }, [toast, refreshSubscription, router]);
+  }, [toast, refreshSubscription, location, setLocation]);
   
   const handleSelectPlan = async (planType: 'monthly' | 'annual', priceId: string) => {
     if (!isAuthenticated) {
