@@ -16,6 +16,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { RouterProvider, Route, Link } from "./lib/SimpleRouter";
 import { ProtectedRoute } from "./lib/ProtectedRoute";
 
+// Import debug component
+import { DebugComponent } from "@/components/DebugComponent";
+
 // Navigation component
 const Navigation = () => {
   const auth = useAuth();
