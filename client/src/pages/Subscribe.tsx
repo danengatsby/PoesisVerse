@@ -32,11 +32,50 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   const { refreshSubscription } = useAuth();
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isElementLoading, setIsElementLoading] = useState(true);
+  const [elementsError, setElementsError] = useState<string | null>(null);
+  
+  // Monitor when Elements are fully loaded
+  useEffect(() => {
+    if (!elements) {
+      return;
+    }
+
+    const loadingListener = (event: { elementType: string; complete: boolean }) => {
+      if (event.elementType === 'payment' && event.complete) {
+        setIsElementLoading(false);
+      }
+    };
+
+    const errorListener = (event: { error: { message: string } }) => {
+      if (event.error) {
+        setElementsError(event.error.message);
+        toast({
+          title: "Payment Form Error",
+          description: event.error.message,
+          variant: "destructive",
+        });
+      }
+    };
+
+    elements.on('loaderror', errorListener);
+    elements.on('loading', loadingListener);
+
+    return () => {
+      elements.off('loaderror', errorListener);
+      elements.off('loading', loadingListener);
+    };
+  }, [elements, toast]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!stripe || !elements) {
+      toast({
+        title: "Payment Service Unavailable",
+        description: "The payment service is not initialized properly. Please try again later.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -74,6 +113,7 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
         }, 1500);
       }
     } catch (error: any) {
+      console.error("Payment error:", error);
       toast({
         title: "Payment Error",
         description: error.message || "An unexpected error occurred",
@@ -83,6 +123,36 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
       setIsSubmitting(false);
     }
   };
+  
+  if (elementsError) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Payment Form Error</AlertTitle>
+          <AlertDescription>
+            {elementsError}
+          </AlertDescription>
+        </Alert>
+        
+        <div className="flex justify-between mt-6">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+          
+          <Button 
+            variant="default" 
+            onClick={() => setLocation('/')}
+          >
+            Return to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -104,13 +174,20 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
       
       <div className="space-y-4">
         <h3 className="font-heading text-lg font-semibold">Payment Details</h3>
-        <PaymentElement />
+        {isElementLoading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin w-6 h-6 border-3 border-primary border-t-transparent rounded-full" aria-label="Loading payment form"/>
+          </div>
+        )}
+        <div className={isElementLoading ? 'opacity-0 h-0' : 'opacity-100'}>
+          <PaymentElement />
+        </div>
       </div>
       
       <Button 
         type="submit" 
         className="w-full bg-primary hover:bg-primary-dark text-white"
-        disabled={!stripe || !elements || isSubmitting}
+        disabled={!stripe || !elements || isSubmitting || isElementLoading}
       >
         {isSubmitting ? (
           <span className="flex items-center">
@@ -340,7 +417,16 @@ export default function Subscribe() {
               ) : (
                 <>
                   {selectedPlan && clientSecret && stripePromise ? (
-                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                    <Elements stripe={stripePromise} options={{ 
+                      clientSecret,
+                      appearance: {
+                        theme: 'stripe',
+                        variables: {
+                          colorPrimary: '#5c6ac4',
+                        },
+                      },
+                      loader: 'auto'
+                    }}>
                       <SubscribeForm plan={selectedPlan} />
                     </Elements>
                   ) : selectedPlan && !clientSecret ? (
