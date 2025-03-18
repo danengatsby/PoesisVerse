@@ -566,9 +566,9 @@ export class DatabaseStorage implements IStorage {
   async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string | null }): Promise<User> {
     try {
       const updateData: Record<string, any> = {
-        stripe_customer_id: stripeInfo.stripeCustomerId,
-        stripe_subscription_id: stripeInfo.stripeSubscriptionId,
-        is_subscribed: stripeInfo.stripeSubscriptionId !== null
+        stripeCustomerId: stripeInfo.stripeCustomerId,
+        stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
+        isSubscribed: stripeInfo.stripeSubscriptionId !== null
       };
       
       // Dacă utilizatorul este abonat, actualizăm datele de abonament
@@ -577,8 +577,8 @@ export class DatabaseStorage implements IStorage {
         const endDate = new Date(currentDate);
         endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
         
-        updateData.subscribed_at = currentDate;
-        updateData.subscription_end_date = endDate;
+        updateData.subscribedAt = currentDate;
+        updateData.subscriptionEndDate = endDate;
       }
       
       const result = await this.db.update(users)
