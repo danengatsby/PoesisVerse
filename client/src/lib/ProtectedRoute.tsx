@@ -7,22 +7,28 @@ interface ProtectedRouteProps {
   component: React.ComponentType<{ match?: { params: Record<string, string> } }>;
 }
 
-export function ProtectedRoute({ path, component: Component }: ProtectedRouteProps) {
+export function ProtectedRoute({ path, component: Component, children }: ProtectedRouteProps & { children?: React.ReactNode }) {
   const { path: currentPath, navigate } = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
 
   // Add debugging logs
-  console.log(`ProtectedRoute check: currentPath=${currentPath}, routePath=${path}, isAuthenticated=${isAuthenticated}, isLoading=${isLoading}`);
+  console.log(`ProtectedRoute: path=${path}, matches=true, isAuthenticated=${isAuthenticated}, isLoading=${isLoading}`);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && currentPath === path) {
+    if (!isLoading && !isAuthenticated && currentPath.startsWith(path.split(':')[0])) {
       console.log(`Redirecting to /auth from protected route ${path}`);
       navigate('/auth');
     }
   }, [isLoading, isAuthenticated, navigate, currentPath, path]);
 
+  // For dynamic routes, match if the current path starts with the non-parameterized part
+  const pathBase = path.split(':')[0]; // e.g. "/edit-poem/" from "/edit-poem/:id"
+  const isPathMatch = path.includes(':')
+    ? currentPath.startsWith(pathBase)
+    : currentPath === path;
+
   // Only render if this is the current path
-  if (currentPath !== path) {
+  if (!isPathMatch) {
     console.log(`ProtectedRoute ${path} not rendering: not on current path`);
     return null;
   }
@@ -41,11 +47,28 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
     return null;
   }
 
-  console.log(`ProtectedRoute ${path} rendering component`);
   // Create a match object for compatibility with wouter
-  const match = { params: {} };
+  // Extract parameters from the currentPath if it's a dynamic route
+  let params = {};
+  
+  if (path.includes(':')) {
+    // Extract parameter name from the path template
+    const paramName = path.split(':')[1]; // e.g. "id" from "/edit-poem/:id"
+    
+    // Extract parameter value from the current path
+    const paramValue = currentPath.substring(pathBase.length);
+    
+    // Add to params object
+    params = { [paramName]: paramValue };
+    
+    console.log(`Extracted params for ${path}:`, params);
+  }
+
   try {
-    return <Component match={match} />;
+    if (children) {
+      return <>{children}</>; // Just pass through children if provided
+    }
+    return <Component match={{ params }} />;
   } catch (error) {
     console.error(`Error rendering protected component for path ${path}:`, error);
     return (

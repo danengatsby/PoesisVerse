@@ -208,13 +208,14 @@ const Router = () => {
       </ProtectedRoute>
       
       <Route path="/edit-poem/:id">
-        {(params) => (
-          <ProtectedRoute path="/edit-poem/:id">
-            <WithMatch params={params ? { id: params.id as string } : undefined}>
-              <AddPoem />
-            </WithMatch>
-          </ProtectedRoute>
-        )}
+        {(params) => {
+          console.log("Edit poem route params:", params);
+          return (
+            <ProtectedRoute path="/edit-poem/:id" component={() => (
+              <AddPoem match={{ params }} />
+            )} />
+          );
+        }}
       </Route>
       
       <ProtectedRoute path="/subscribers">
