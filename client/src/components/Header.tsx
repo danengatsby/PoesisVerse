@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CrownIcon, PlusCircleIcon, LogOutIcon, MenuIcon, MailIcon, FileText, LayoutDashboard } from "lucide-react";
+import { CrownIcon, PlusCircleIcon, LogOutIcon, MenuIcon, MailIcon, FileText, LayoutDashboard, FilePlus, Upload } from "lucide-react";
 import LoginModal from "./auth/LoginModal";
 import SignupModal from "./auth/SignupModal";
 import { useToast } from "@/hooks/use-toast";
@@ -139,6 +139,12 @@ export default function Header() {
                           Abonați
                         </Link>
                       </Button>
+                      <Button variant="outline" className="mr-2" asChild>
+                        <Link href="/mass-add">
+                          <FilePlus className="h-4 w-4 mr-1" />
+                          Massadd
+                        </Link>
+                      </Button>
                     </>
                   )}
                   
@@ -240,6 +246,12 @@ export default function Header() {
                         <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
                           <CrownIcon className="h-4 w-4 mr-2" />
                           Abonați
+                        </div>
+                      </Link>
+                      <Link href="/mass-add" className="block w-full">
+                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                          <FilePlus className="h-4 w-4 mr-2" />
+                          Massadd
                         </div>
                       </Link>
                     </>

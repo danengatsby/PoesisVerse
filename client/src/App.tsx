@@ -13,6 +13,7 @@ import AddPoem from '@/pages/AddPoem';
 import Subscribers from '@/pages/Subscribers';
 import PoemManagement from '@/pages/PoemManagement';
 import AdminDashboard from '@/pages/AdminDashboard';
+import MassAdd from '@/pages/MassAdd';
 import { useAuth } from '@/hooks/useAuth';
 
 // Import wouter components
@@ -235,6 +236,12 @@ const Router = () => {
       <ProtectedRoute path="/admin-dashboard">
         <WithMatch>
           <AdminDashboard />
+        </WithMatch>
+      </ProtectedRoute>
+      
+      <ProtectedRoute path="/mass-add">
+        <WithMatch>
+          <MassAdd />
         </WithMatch>
       </ProtectedRoute>
       
