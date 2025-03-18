@@ -19,19 +19,14 @@ export interface Poem {
 }
 
 export function usePoems() {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [selectedPoemId, setSelectedPoemId] = useState<number | null>(null);
 
   // Fetch all poems
-  const { data: poems, isLoading: isLoadingPoems } = useQuery({
+  const { data: poems, isLoading: isLoadingPoems, refetch: refetchPoems } = useQuery({
     queryKey: ["/api/poems"],
     queryFn: async () => {
-      const headers: HeadersInit = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
-      const response = await fetch("/api/poems", { headers });
+      const response = await fetch("/api/poems");
       if (!response.ok) {
         throw new Error("Failed to fetch poems");
       }
@@ -46,12 +41,7 @@ export function usePoems() {
       const poemId = queryKey[1];
       if (!poemId) return null;
       
-      const headers: HeadersInit = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
-      const response = await fetch(`/api/poems/${poemId}`, { headers });
+      const response = await fetch(`/api/poems/${poemId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch poem");
       }
@@ -79,7 +69,7 @@ export function usePoems() {
   // Bookmark a poem
   const { mutate: bookmarkPoem } = useMutation({
     mutationFn: async (poemId: number) => {
-      if (!token) {
+      if (!isAuthenticated) {
         throw new Error("You need to be logged in to bookmark poems");
       }
       
@@ -94,18 +84,18 @@ export function usePoems() {
   const { data: bookmarkedPoems, isLoading: isLoadingBookmarks } = useQuery({
     queryKey: ["/api/bookmarks"],
     queryFn: async () => {
-      if (!token) return [];
+      if (!isAuthenticated) return [];
       
       const response = await apiRequest("GET", "/api/bookmarks");
       return response.json() as Promise<Poem[]>;
     },
-    enabled: !!token,
+    enabled: !!isAuthenticated,
   });
 
   // Remove a bookmark
   const { mutate: removeBookmark } = useMutation({
     mutationFn: async (poemId: number) => {
-      if (!token) {
+      if (!isAuthenticated) {
         throw new Error("You need to be logged in to remove bookmarks");
       }
       
@@ -128,5 +118,6 @@ export function usePoems() {
     setSelectedPoemId,
     bookmarkPoem,
     removeBookmark,
+    refetchPoems,
   };
 }
