@@ -337,8 +337,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         year: z.string().optional(),
         category: z.string().min(1),
         isPremium: z.boolean().default(false),
-        imageUrl: z.string().url(),
-        audioUrl: z.string().url().optional(),
+        imageUrl: z.string(),
+        audioUrl: z.string().optional(),
       });
       
       const parsedData = poemSchema.safeParse(req.body);
@@ -402,8 +402,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         year: z.string().optional(),
         category: z.string().optional(),
         isPremium: z.boolean(),
-        imageUrl: z.string().url().optional(),
-        audioUrl: z.string().url().optional(),
+        imageUrl: z.string().optional(),
+        audioUrl: z.string().optional(),
       });
       
       const parsedData = poemSchema.safeParse(req.body);
