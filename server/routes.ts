@@ -481,9 +481,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: amount,
         currency: 'usd',
         customer: customerId,
-        automatic_payment_methods: {
-          enabled: true,
-        },
+        capture_method: 'automatic',
+        payment_method_types: ['card'],
         metadata: {
           userId: user.id.toString(),
           planType: planType,
