@@ -604,13 +604,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate subscription info if the user is subscribed
       let subscriptionInfo = null;
-      if (user.isSubscribed && user.subscribed_at && user.subscription_end_date) {
+      if (user.isSubscribed && user.subscribedAt && user.subscriptionEndDate) {
         const now = new Date();
-        const endDate = new Date(user.subscription_end_date);
+        const endDate = new Date(user.subscriptionEndDate);
         
         // Calculate days remaining
         const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        const startDate = new Date(user.subscribed_at);
+        const startDate = new Date(user.subscribedAt);
         
         subscriptionInfo = {
           startDate: startDate.toISOString().split('T')[0],
