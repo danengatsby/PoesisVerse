@@ -566,6 +566,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get recently added poems
+  app.get("/api/recent-poems", async (req, res) => {
+    try {
+      const recentPoems = await storage.getRecentlyAddedPoems();
+      return res.status(200).json(recentPoems);
+    } catch (error) {
+      console.error('Error fetching recent poems:', error);
+      return res.status(500).json({ message: 'Failed to fetch recent poems' });
+    }
+  });
+  
+  // Get admin dashboard statistics
+  app.get("/api/admin/stats", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUser = (req as any).user;
+      
+      // Verifică dacă utilizatorul este Administrator
+      if (currentUser.username !== "Administrator") {
+        return res.status(403).json({ message: "Acces interzis. Numai administratorii pot accesa această resursă." });
+      }
+      
+      // Obține toate poemele pentru calcul de statistici
+      const allPoems = await storage.getAllPoems();
+      
+      // Calculează statistici
+      const categories: Record<string, number> = {};
+      const authors = new Set<string>();
+      let premiumCount = 0;
+      let freeCount = 0;
+      
+      allPoems.forEach(poem => {
+        // Numără categorii
+        const category = poem.category || 'Necategorizat';
+        categories[category] = (categories[category] || 0) + 1;
+        
+        // Numără autori unici
+        authors.add(poem.author);
+        
+        // Numără poeme premium vs. gratuite
+        if (poem.isPremium) {
+          premiumCount++;
+        } else {
+          freeCount++;
+        }
+      });
+      
+      // Obține toți utilizatorii
+      const allUsers = await storage.getAllUsers();
+      const subscriberCount = Array.from(allUsers.values()).filter(user => user.isSubscribed).length;
+      
+      const stats = {
+        totalPoems: allPoems.length,
+        premiumPoems: premiumCount,
+        freePoems: freeCount,
+        categories,
+        authorsCount: authors.size,
+        totalUsers: allUsers.size,
+        subscribers: subscriberCount
+      };
+      
+      return res.status(200).json(stats);
+    } catch (error) {
+      console.error('Error fetching admin statistics:', error);
+      return res.status(500).json({ message: 'Failed to fetch admin statistics' });
+    }
+  });
+  
   // User registration endpoint with session-based auth
   app.post("/api/register", async (req, res) => {
     try {
