@@ -165,7 +165,7 @@ const ProtectedRoute = ({ path, children }: { path: string, children: React.Reac
 const WithMatch = ({ children, path, params }: { 
   children: React.ReactNode,
   path?: string,
-  params?: Record<string, string>
+  params?: Record<string, string> | any
 }) => {
   // Create a match object for compatibility with components expecting it
   const matchProps = { match: { params: params || {} } };
@@ -210,7 +210,7 @@ const Router = () => {
       <Route path="/edit-poem/:id">
         {(params) => (
           <ProtectedRoute path="/edit-poem/:id">
-            <WithMatch params={params}>
+            <WithMatch params={params ? { id: params.id as string } : undefined}>
               <AddPoem />
             </WithMatch>
           </ProtectedRoute>

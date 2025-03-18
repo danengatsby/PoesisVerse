@@ -308,7 +308,15 @@ export default function PoemManagement() {
     }
   };
 
+  const [, setLocation] = useLocation();
+  
   const handleEditPoem = (poem: Poem) => {
+    // În loc să deschidem dialogul, navigăm către pagina de editare
+    setLocation(`/edit-poem/${poem.id}`);
+  };
+  
+  const handleEditPoemInDialog = (poem: Poem) => {
+    // Păstrăm și opțiunea de a edita în dialog pentru cazuri particulare
     setEditPoem({
       title: poem.title,
       content: poem.content,
