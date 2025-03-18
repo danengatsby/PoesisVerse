@@ -228,9 +228,25 @@ export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
           
           <CardContent className="p-6 md:p-8">
             <div className="prose prose-lg max-w-none">
-              <div className="italic mb-6 text-neutral-600 font-medium">
-                {selectedPoem.description}
-              </div>
+              {selectedPoem.description && (
+                <div className="italic mb-6 text-neutral-600 font-medium">
+                  {selectedPoem.description}
+                </div>
+              )}
+              
+              {selectedPoem.audioUrl && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-neutral-500 mb-2">Ascultă recitarea:</h3>
+                  <audio 
+                    controls 
+                    src={selectedPoem.audioUrl}
+                    className="w-full"
+                  >
+                    Browserul dvs. nu suportă redarea audio.
+                  </audio>
+                </div>
+              )}
+              
               <div className="whitespace-pre-line leading-relaxed poem-text">
                 {selectedPoem.content}
               </div>
@@ -244,17 +260,7 @@ export default function PoemDisplay({ selectedPoemId }: PoemDisplayProps) {
                 </div>
                 
                 <div className="flex space-x-2">
-                  {selectedPoem.audioUrl && (
-                    <div className="mr-4">
-                      <audio 
-                        controls 
-                        src={selectedPoem.audioUrl}
-                        className="max-w-[200px] h-8"
-                      >
-                        Browserul dvs. nu suportă redarea audio.
-                      </audio>
-                    </div>
-                  )}
+                  {/* Audio player removed from here and moved above poem content */}
 
                   <button
                     className="p-2 text-neutral-600 hover:text-primary transition-colors"
