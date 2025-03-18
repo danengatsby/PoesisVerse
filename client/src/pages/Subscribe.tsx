@@ -34,39 +34,55 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isElementLoading, setIsElementLoading] = useState(true);
   const [elementsError, setElementsError] = useState<string | null>(null);
+  const [isPaymentElementMounted, setIsPaymentElementMounted] = useState(false);
   
-  // Monitor when Elements are fully loaded and enable button after a reasonable delay
+  // Give more time for the element to properly mount
   useEffect(() => {
-    // Enable the button after a delay regardless of other events
-    // This ensures users can try to complete the payment even if
-    // Stripe's events don't fire properly
-    const shortTimeoutId = setTimeout(() => {
-      setIsElementLoading(false);
-    }, 2000);
+    const longTimeoutId = setTimeout(() => {
+      // After a longer delay, check if we've found the element yet
+      if (!isPaymentElementMounted) {
+        console.log("PaymentElement not mounted after timeout");
+        setIsElementLoading(false);
+      }
+    }, 4000);
     
     return () => {
-      clearTimeout(shortTimeoutId);
+      clearTimeout(longTimeoutId);
     };
-  }, []);
+  }, [isPaymentElementMounted]);
   
-  // Log when elements are ready
+  // Check for element readiness
   useEffect(() => {
     if (!elements) {
       return;
     }
     
-    console.log("Elements ready:", elements);
-    
-    // Try to get the payment element to check if it's ready
-    try {
-      const paymentElement = elements.getElement('payment');
-      if (paymentElement) {
-        console.log("Payment element found, enabling button");
-        setIsElementLoading(false);
+    // Add a delay before checking for payment element
+    // This gives Stripe time to inject the iframe
+    const checkPaymentElementInterval = setInterval(() => {
+      try {
+        const paymentElement = elements.getElement('payment');
+        if (paymentElement) {
+          console.log("Payment element found and mounted successfully");
+          setIsPaymentElementMounted(true);
+          setIsElementLoading(false);
+          clearInterval(checkPaymentElementInterval);
+        }
+      } catch (error) {
+        console.log("Still waiting for payment element...");
       }
-    } catch (error) {
-      console.log("Error getting payment element:", error);
-    }
+    }, 500);
+    
+    // Clear interval after 10 seconds maximum wait time
+    const maxWaitTimeout = setTimeout(() => {
+      clearInterval(checkPaymentElementInterval);
+      setIsElementLoading(false);
+    }, 10000);
+    
+    return () => {
+      clearInterval(checkPaymentElementInterval);
+      clearTimeout(maxWaitTimeout);
+    };
   }, [elements]);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +92,26 @@ const SubscribeForm = ({ plan }: { plan: { type: string, price: string, priceId:
       toast({
         title: "Payment Service Unavailable",
         description: "The payment service is not initialized properly. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Double-check that the payment element is actually mounted before submitting
+    try {
+      const paymentElement = elements.getElement('payment');
+      if (!paymentElement) {
+        toast({
+          title: "Payment Form Not Ready",
+          description: "The payment form hasn't loaded properly. Please refresh the page and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch (error) {
+      toast({
+        title: "Payment Form Error",
+        description: "There was an error with the payment form. Please refresh the page and try again.",
         variant: "destructive",
       });
       return;
@@ -419,16 +455,27 @@ export default function Subscribe() {
               ) : (
                 <>
                   {selectedPlan && clientSecret && stripePromise ? (
-                    <Elements stripe={stripePromise} options={{ 
-                      clientSecret,
-                      appearance: {
-                        theme: 'stripe',
-                        variables: {
-                          colorPrimary: '#5c6ac4',
+                    <Elements 
+                      stripe={stripePromise} 
+                      options={{ 
+                        clientSecret,
+                        appearance: {
+                          theme: 'stripe',
+                          variables: {
+                            colorPrimary: '#5c6ac4',
+                            fontFamily: 'system-ui, sans-serif',
+                            borderRadius: '8px',
+                          },
                         },
-                      },
-                      loader: 'auto'
-                    }}>
+                        loader: 'always',
+                        fonts: [
+                          {
+                            cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap',
+                          }
+                        ]
+                      }}
+                      key={clientSecret} // Force re-initialization when client secret changes
+                    >
                       <SubscribeForm plan={selectedPlan} />
                     </Elements>
                   ) : selectedPlan && !clientSecret ? (
