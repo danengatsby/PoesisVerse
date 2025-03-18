@@ -19,6 +19,8 @@ export interface IStorage {
   getPoemById(id: number): Promise<Poem | undefined>;
   getPoemByTitle(title: string): Promise<Poem | undefined>;
   createPoem(poem: Poem): Promise<Poem>;
+  updatePoem(id: number, poem: Poem): Promise<Poem>; // Metodă nouă pentru actualizarea unui poem
+  deletePoem(id: number): Promise<void>; // Metodă nouă pentru ștergerea unui poem
   getRelatedPoems(poemId: number, limit?: number): Promise<Poem[]>;
   
   // User-Poem interactions
@@ -309,6 +311,51 @@ export class MemStorage implements IStorage {
     console.log(`Total poeme adăugate: ${this.lastAddedPoems.length}`);
     
     return newPoem;
+  }
+  
+  async updatePoem(id: number, poem: Poem): Promise<Poem> {
+    const existingPoem = await this.getPoemById(id);
+    if (!existingPoem) {
+      throw new Error(`Poem with id ${id} not found`);
+    }
+    
+    const updatedPoem = { ...poem, id };
+    this.poems.set(id, updatedPoem);
+    
+    // Actualizăm și în lastAddedPoems dacă există
+    const index = this.lastAddedPoems.findIndex(p => p.id === id);
+    if (index !== -1) {
+      this.lastAddedPoems[index] = updatedPoem;
+    }
+    
+    console.log(`Poem actualizat: ID=${updatedPoem.id}, Titlu=${updatedPoem.title}`);
+    
+    return updatedPoem;
+  }
+  
+  async deletePoem(id: number): Promise<void> {
+    const existingPoem = await this.getPoemById(id);
+    if (!existingPoem) {
+      throw new Error(`Poem with id ${id} not found`);
+    }
+    
+    // Ștergem din colecția principală
+    this.poems.delete(id);
+    
+    // Ștergem și din lastAddedPoems dacă există
+    const index = this.lastAddedPoems.findIndex(p => p.id === id);
+    if (index !== -1) {
+      this.lastAddedPoems.splice(index, 1);
+    }
+    
+    // Ștergem bookmark-urile asociate acestui poem
+    for (const [userPoemId, userPoem] of this.userPoems.entries()) {
+      if (userPoem.poemId === id) {
+        this.userPoems.delete(userPoemId);
+      }
+    }
+    
+    console.log(`Poem șters: ID=${id}, Titlu=${existingPoem.title}`);
   }
 
   async getRelatedPoems(poemId: number, limit: number = 2): Promise<Poem[]> {
@@ -735,6 +782,69 @@ export class DatabaseStorage implements IStorage {
       return result[0];
     } catch (error) {
       console.error("Eroare la crearea poemului:", error);
+      throw error;
+    }
+  }
+  
+  async updatePoem(id: number, poem: Poem): Promise<Poem> {
+    try {
+      // Verificăm dacă poemul există
+      const existingPoem = await this.getPoemById(id);
+      if (!existingPoem) {
+        throw new Error(`Poem with id ${id} not found`);
+      }
+      
+      // Actualizăm poemul
+      const result = await this.db.update(poems)
+        .set({
+          title: poem.title,
+          content: poem.content,
+          author: poem.author,
+          imageUrl: poem.imageUrl,
+          thumbnailUrl: poem.thumbnailUrl,
+          description: poem.description,
+          year: poem.year,
+          category: poem.category,
+          isPremium: poem.isPremium
+        })
+        .where(eq(poems.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        throw new Error(`Failed to update poem with id ${id}`);
+      }
+      
+      return result[0];
+    } catch (error) {
+      console.error("Eroare la actualizarea poemului:", error);
+      throw error;
+    }
+  }
+  
+  async deletePoem(id: number): Promise<void> {
+    try {
+      // Verificăm dacă poemul există
+      const existingPoem = await this.getPoemById(id);
+      if (!existingPoem) {
+        throw new Error(`Poem with id ${id} not found`);
+      }
+      
+      // Mai întâi ștergem orice bookmark-uri asociate acestui poem pentru a evita erorile de constraint
+      await this.db.delete(userPoems)
+        .where(eq(userPoems.poemId, id));
+      
+      // Apoi ștergem poemul
+      const result = await this.db.delete(poems)
+        .where(eq(poems.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        throw new Error(`Failed to delete poem with id ${id}`);
+      }
+      
+      console.log(`Poem șters: ID=${id}, Titlu=${existingPoem.title}`);
+    } catch (error) {
+      console.error("Eroare la ștergerea poemului:", error);
       throw error;
     }
   }
