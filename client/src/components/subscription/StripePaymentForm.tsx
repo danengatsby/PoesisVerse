@@ -11,6 +11,7 @@ import {
   PaymentElement,
   Elements,
 } from "@stripe/react-stripe-js";
+import { queryClient } from "@/lib/queryClient";
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -96,6 +97,23 @@ function CheckoutForm({
           console.error('Error marking subscription as successful:', data.error);
         } else {
           console.log(`${plan.type} subscription marked as successful:`, data.message);
+          
+          // Important: Actualizează starea utilizatorului după actualizarea abonamentului
+          if (data.user) {
+            // Actualizăm datele de utilizator în cache
+            queryClient.setQueryData(["/api/auth/check"], {
+              isAuthenticated: true,
+              user: {
+                ...data.user,
+                isSubscribed: true
+              }
+            });
+            
+            // Forțăm și reîncărcarea datelor despre abonament
+            queryClient.setQueryData(["/api/subscription"], {
+              isActive: true
+            });
+          }
         }
       } catch (apiError) {
         console.error('Error calling mark-subscription-success:', apiError);
