@@ -18,7 +18,9 @@ export function useAuth() {
       // Dacă ajungem aici, înseamnă că răspunsul este ok
       
       const userData = await response.json();
-      // Context will be updated via the AuthContext useEffect that checks the session
+      
+      // Actualizăm manual contextul pentru a evita întârzierea
+      await context.checkSession();
       
       toast({
         title: "Success",
@@ -46,7 +48,9 @@ export function useAuth() {
       // Dacă ajungem aici, înseamnă că răspunsul este ok
       
       const userData = await response.json();
-      // Context will be updated via the AuthContext useEffect that checks the session
+      
+      // Actualizăm manual contextul pentru a evita întârzierea
+      await context.checkSession();
       
       toast({
         title: "Success",
@@ -69,7 +73,8 @@ export function useAuth() {
       // apiRequest aruncă excepție dacă răspunsul nu este ok
       // Dacă ajungem aici, înseamnă că răspunsul este ok
       
-      // Context will be updated via the AuthContext useEffect that checks the session
+      // Actualizăm manual contextul pentru a evita întârzierea
+      await context.checkSession();
       
       toast({
         title: "Success",

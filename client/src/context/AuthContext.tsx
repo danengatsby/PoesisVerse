@@ -16,6 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isSubscribed: boolean;
+  checkSession: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -23,6 +24,7 @@ export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   isSubscribed: false,
+  checkSession: async () => {}
 });
 
 interface AuthProviderProps {
@@ -70,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         isAuthenticated: !!user,
         isLoading,
         isSubscribed,
+        checkSession,
       }}
     >
       {children}
