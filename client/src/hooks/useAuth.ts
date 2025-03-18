@@ -27,27 +27,30 @@ export function useAuth() {
 
   // Get current user info
   const {
-    data: user,
+    data: authData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["/api/users/profile"],
+    queryKey: ["/api/auth/check"],
     queryFn: async ({ signal }) => {
       try {
-        const res = await fetch("/api/users/profile", { signal });
-        if (res.status === 401) {
-          return null;
-        }
+        const res = await fetch("/api/auth/check", { 
+          signal,
+          credentials: "include" // Include cookies/session in request
+        });
         if (!res.ok) {
-          throw new Error("Failed to fetch user data");
+          throw new Error("Failed to verify authentication status");
         }
         return res.json();
       } catch (err) {
-        console.error("Error fetching user profile:", err);
-        return null;
+        console.error("Error checking auth status:", err);
+        return { isAuthenticated: false, user: null };
       }
     },
   });
+  
+  // Extract user from auth data
+  const user = authData?.user || null;
 
   // Login mutation
   const loginMutation = useMutation({
@@ -60,7 +63,10 @@ export function useAuth() {
       return await res.json();
     },
     onSuccess: (userData: User) => {
-      queryClient.setQueryData(["/api/users/profile"], userData);
+      queryClient.setQueryData(["/api/auth/check"], { 
+        isAuthenticated: true, 
+        user: userData 
+      });
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in",
@@ -86,7 +92,10 @@ export function useAuth() {
       return await res.json();
     },
     onSuccess: (userData: User) => {
-      queryClient.setQueryData(["/api/users/profile"], userData);
+      queryClient.setQueryData(["/api/auth/check"], { 
+        isAuthenticated: true, 
+        user: userData 
+      });
       toast({
         title: "Welcome!",
         description: "Your account has been created successfully",

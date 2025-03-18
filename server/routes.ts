@@ -32,7 +32,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(session({
     store: storage instanceof DatabaseStorage 
       ? (storage as DatabaseStorage).sessionStore 
-      : new MemoryStore({ checkPeriod: 86400000 }),
+      : new MemoryStore({ checkPeriod: 86400000 }) as any,
     secret: process.env.SESSION_SECRET || 'poetrysecret123',
     resave: false,
     saveUninitialized: false,
@@ -344,6 +344,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.clearCookie('connect.sid');
       return res.status(200).json({ message: 'Logged out successfully' });
     });
+  });
+  
+  // Simple auth check endpoint
+  app.get("/api/auth/check", async (req, res) => {
+    if (req.session.isAuthenticated && req.session.userId) {
+      try {
+        const user = await storage.getUser(req.session.userId);
+        if (user) {
+          const { password, ...userWithoutPassword } = user;
+          return res.status(200).json({ 
+            isAuthenticated: true, 
+            user: userWithoutPassword 
+          });
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      }
+    }
+    
+    return res.status(200).json({ isAuthenticated: false, user: null });
   });
   
   // Get user profile (requires authentication)
