@@ -31,7 +31,7 @@ export default function Subscribe() {
   const [showPlanModal, setShowPlanModal] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<{ type: string, price: string, priceId: string, duration: string } | null>(null);
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, refreshSubscription } = useAuth();
+  const { isAuthenticated, isLoading, refreshSubscription, user, isSubscribed } = useAuth();
   const [location, setLocation] = useLocation();
   
   // Check for successful subscription return from Stripe
@@ -123,7 +123,33 @@ export default function Subscribe() {
             </CardHeader>
             
             <CardContent>
-              {!stripePromise ? (
+              {isSubscribed ? (
+                <div className="text-center p-6">
+                  <CheckIcon className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+                  <h2 className="text-2xl font-bold mb-2">Already Subscribed!</h2>
+                  <p className="text-neutral-600 max-w-md mx-auto mb-6">
+                    You already have full access to all premium content.
+                  </p>
+                  
+                  {user?.subscriptionInfo && (
+                    <div className="bg-gray-50 p-4 rounded-lg mb-6 max-w-md mx-auto text-left">
+                      <h3 className="font-medium text-lg mb-2">Your Subscription Details:</h3>
+                      <ul className="space-y-2 text-sm">
+                        <li><span className="font-medium">Subscribed on:</span> {user.subscriptionInfo.startDate}</li>
+                        <li><span className="font-medium">Expires on:</span> {user.subscriptionInfo.endDate}</li>
+                        <li><span className="font-medium">Status:</span> <span className="text-emerald-600 font-medium">Active</span></li>
+                        <li><span className="font-medium">Time remaining:</span> {user.subscriptionInfo.daysRemaining} days</li>
+                      </ul>
+                    </div>
+                  )}
+                  
+                  <Button asChild>
+                    <Link href="/">
+                      Return to Poems
+                    </Link>
+                  </Button>
+                </div>
+              ) : !stripePromise ? (
                 <div className="py-4">
                   <Alert variant="destructive" className="mb-8">
                     <AlertTriangle className="h-4 w-4" />

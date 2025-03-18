@@ -101,10 +101,15 @@ export default function Header() {
                         </Badge>
                       )}
                     </div>
-                    {isSubscribed && (
-                      <span className="text-xs text-emerald-600 font-medium">
-                        Abonat • Acces complet la toate poemele
-                      </span>
+                    {isSubscribed && user?.subscriptionInfo && (
+                      <div className="text-xs">
+                        <span className="text-emerald-600 font-medium">
+                          Abonat • Acces complet la toate poemele
+                        </span>
+                        <span className="text-gray-500 block">
+                          Expiră pe {user.subscriptionInfo.endDate} ({user.subscriptionInfo.daysRemaining} zile rămase)
+                        </span>
+                      </div>
                     )}
                   </div>
                   
@@ -177,10 +182,15 @@ export default function Header() {
                         </Badge>
                       )}
                     </div>
-                    {isSubscribed && (
-                      <span className="text-xs text-emerald-600 font-medium mt-1 block">
-                        Abonat • Acces complet la toate poemele
-                      </span>
+                    {isSubscribed && user?.subscriptionInfo && (
+                      <div className="text-xs mt-1 block">
+                        <span className="text-emerald-600 font-medium block">
+                          Abonat • Acces complet la toate poemele
+                        </span>
+                        <span className="text-gray-500 block">
+                          Expiră pe {user.subscriptionInfo.endDate} ({user.subscriptionInfo.daysRemaining} zile rămase)
+                        </span>
+                      </div>
                     )}
                   </div>
                   
