@@ -147,12 +147,12 @@ export default function Header() {
                     </>
                   )}
                   
-                  {/* Butonul Massadd separat pentru a ne asigura că este afișat */}
-                  {user && (
-                    <Button variant="outline" className="mr-2" asChild>
+                  {/* Massadd direct - hardcodat - va apărea imediat după autentificare */}
+                  {isAuthenticated && (
+                    <Button variant="default" className="mr-2 bg-green-600 hover:bg-green-700 text-white" asChild>
                       <Link href="/mass-add">
                         <FilePlus className="h-4 w-4 mr-1" />
-                        Massadd
+                        MASS-ADD
                       </Link>
                     </Button>
                   )}
@@ -231,31 +231,33 @@ export default function Header() {
                     )}
                   </div>
                   
-                  {user && (
+                  {/* Admin links */}
+                  {user?.username === "Administrator" && (
                     <>
-                      {user.username === "Administrator" && (
-                        <>
-                          <Link href="/admin-dashboard" className="block w-full">
-                            <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
-                              <LayoutDashboard className="h-4 w-4 mr-2" />
-                              Dashboard
-                            </div>
-                          </Link>
-                          <Link href="/poems-management" className="block w-full">
-                            <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
-                              <FileText className="h-4 w-4 mr-2" />
-                              Poeme
-                            </div>
-                          </Link>
-                          <Link href="/subscribers" className="block w-full">
-                            <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
-                              <CrownIcon className="h-4 w-4 mr-2" />
-                              Abonați
-                            </div>
-                          </Link>
-                        </>
-                      )}
+                      <Link href="/admin-dashboard" className="block w-full">
+                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          Dashboard
+                        </div>
+                      </Link>
+                      <Link href="/poems-management" className="block w-full">
+                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Poeme
+                        </div>
+                      </Link>
+                      <Link href="/subscribers" className="block w-full">
+                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                          <CrownIcon className="h-4 w-4 mr-2" />
+                          Abonați
+                        </div>
+                      </Link>
+                    </>
+                  )}
 
+                  {/* Regular user links */}
+                  {isAuthenticated && (
+                    <>
                       <Link href="/add-poem" className="block w-full">
                         <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
                           <PlusCircleIcon className="h-4 w-4 mr-2" />
@@ -263,9 +265,9 @@ export default function Header() {
                         </div>
                       </Link>
                       <Link href="/mass-add" className="block w-full">
-                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                        <div className="w-full text-left px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition flex items-center">
                           <FilePlus className="h-4 w-4 mr-2" />
-                          Massadd
+                          MASS-ADD
                         </div>
                       </Link>
                     </>
