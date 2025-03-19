@@ -113,48 +113,46 @@ export default function Header() {
                     )}
                   </div>
                   
-                  {user && (
+                  {/* Simplificat - toate butoanele pentru admin */}
+                  {isAuthenticated && user?.username === "Administrator" && (
                     <>
-                      {user.username === "Administrator" && (
-                        <>
-                          <Button variant="outline" className="mr-2" asChild>
-                            <Link href="/admin-dashboard">
-                              <LayoutDashboard className="h-4 w-4 mr-1" />
-                              Dashboard
-                            </Link>
-                          </Button>
-                          <Button variant="outline" className="mr-2" asChild>
-                            <Link href="/poems-management">
-                              <FileText className="h-4 w-4 mr-1" />
-                              Poeme
-                            </Link>
-                          </Button>
-                          <Button variant="outline" className="mr-2" asChild>
-                            <Link href="/subscribers">
-                              <CrownIcon className="h-4 w-4 mr-1" />
-                              Abonați
-                            </Link>
-                          </Button>
-                        </>
-                      )}
+                      <Button variant="outline" className="mr-2" asChild>
+                        <Link href="/admin-dashboard">
+                          <LayoutDashboard className="h-4 w-4 mr-1" />
+                          Dashboard
+                        </Link>
+                      </Button>
+                      <Button variant="outline" className="mr-2" asChild>
+                        <Link href="/poems-management">
+                          <FileText className="h-4 w-4 mr-1" />
+                          Poeme
+                        </Link>
+                      </Button>
+                      <Button variant="outline" className="mr-2" asChild>
+                        <Link href="/subscribers">
+                          <CrownIcon className="h-4 w-4 mr-1" />
+                          Abonați
+                        </Link>
+                      </Button>
+                    </>
+                  )}
 
+                  {/* Toate butoanele pentru utilizatori autentificați */}
+                  {isAuthenticated && (
+                    <>
                       <Button variant="outline" className="mr-2" asChild>
                         <Link href="/add-poem">
                           <PlusCircleIcon className="h-4 w-4 mr-1" />
                           Adăugare poem
                         </Link>
                       </Button>
+                      <Button variant="default" className="mr-2 bg-green-600 hover:bg-green-700 text-white" asChild>
+                        <Link href="/mass-add">
+                          <FilePlus className="h-4 w-4 mr-1" />
+                          MASS-ADD
+                        </Link>
+                      </Button>
                     </>
-                  )}
-                  
-                  {/* Massadd direct - hardcodat - va apărea imediat după autentificare */}
-                  {isAuthenticated && (
-                    <Button variant="default" className="mr-2 bg-green-600 hover:bg-green-700 text-white" asChild>
-                      <Link href="/mass-add">
-                        <FilePlus className="h-4 w-4 mr-1" />
-                        MASS-ADD
-                      </Link>
-                    </Button>
                   )}
                   
                   {!isSubscribed && (
