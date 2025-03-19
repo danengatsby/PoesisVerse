@@ -162,15 +162,7 @@ export default function Header() {
                     </Button>
                   )}
                   
-                  <Button 
-                    variant="outline" 
-                    className="mr-2 text-blue-500 border-blue-500 hover:bg-blue-50" 
-                    onClick={testEmail}
-                    disabled={isTestingEmail}
-                  >
-                    <MailIcon className="h-4 w-4 mr-1" />
-                    {isTestingEmail ? 'Se trimite...' : 'Test email'}
-                  </Button>
+                  {/* Butonul de testare email a fost eliminat */}
                   
                   <Button variant="ghost" onClick={handleLogout}>
                     <LogOutIcon className="h-4 w-4 mr-1" />
@@ -281,14 +273,7 @@ export default function Header() {
                     </button>
                   )}
                   
-                  <button 
-                    className="w-full text-left px-4 py-2 rounded-md text-blue-500 hover:bg-blue-50 transition flex items-center"
-                    onClick={testEmail}
-                    disabled={isTestingEmail}
-                  >
-                    <MailIcon className="h-4 w-4 mr-2" />
-                    {isTestingEmail ? 'Se trimite...' : 'Test email'}
-                  </button>
+                  {/* Butonul de testare email eliminat și din meniul mobil */}
                   
                   <button 
                     className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center"
