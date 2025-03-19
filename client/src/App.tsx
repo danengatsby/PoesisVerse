@@ -90,6 +90,9 @@ const Navigation = () => {
                 {isAdmin && (
                   <Link href="/add-poem" className="hover:text-gray-300">Add Poem</Link>
                 )}
+                {auth.isAuthenticated && (
+                  <Link href="/mass-add" className="hover:text-gray-300 bg-green-500 text-white px-3 py-1 rounded-md font-bold">MASS-ADD</Link>
+                )}
                 {isAdmin && (
                   <Link href="/subscribers" className="hover:text-gray-300">Subscribers</Link>
                 )}
