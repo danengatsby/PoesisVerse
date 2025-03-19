@@ -113,30 +113,35 @@ export default function Header() {
                     )}
                   </div>
                   
-                  {user?.username === "Administrator" && (
+                  {user && (
                     <>
-                      <Button variant="outline" className="mr-2" asChild>
-                        <Link href="/admin-dashboard">
-                          <LayoutDashboard className="h-4 w-4 mr-1" />
-                          Dashboard
-                        </Link>
-                      </Button>
+                      {user.username === "Administrator" && (
+                        <>
+                          <Button variant="outline" className="mr-2" asChild>
+                            <Link href="/admin-dashboard">
+                              <LayoutDashboard className="h-4 w-4 mr-1" />
+                              Dashboard
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="mr-2" asChild>
+                            <Link href="/poems-management">
+                              <FileText className="h-4 w-4 mr-1" />
+                              Poeme
+                            </Link>
+                          </Button>
+                          <Button variant="outline" className="mr-2" asChild>
+                            <Link href="/subscribers">
+                              <CrownIcon className="h-4 w-4 mr-1" />
+                              Abonați
+                            </Link>
+                          </Button>
+                        </>
+                      )}
+
                       <Button variant="outline" className="mr-2" asChild>
                         <Link href="/add-poem">
                           <PlusCircleIcon className="h-4 w-4 mr-1" />
                           Adăugare poem
-                        </Link>
-                      </Button>
-                      <Button variant="outline" className="mr-2" asChild>
-                        <Link href="/poems-management">
-                          <FileText className="h-4 w-4 mr-1" />
-                          Poeme
-                        </Link>
-                      </Button>
-                      <Button variant="outline" className="mr-2" asChild>
-                        <Link href="/subscribers">
-                          <CrownIcon className="h-4 w-4 mr-1" />
-                          Abonați
                         </Link>
                       </Button>
                       <Button variant="outline" className="mr-2" asChild>
@@ -222,30 +227,35 @@ export default function Header() {
                     )}
                   </div>
                   
-                  {user?.username === "Administrator" && (
+                  {user && (
                     <>
-                      <Link href="/admin-dashboard" className="block w-full">
-                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
-                          <LayoutDashboard className="h-4 w-4 mr-2" />
-                          Dashboard
-                        </div>
-                      </Link>
+                      {user.username === "Administrator" && (
+                        <>
+                          <Link href="/admin-dashboard" className="block w-full">
+                            <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                              <LayoutDashboard className="h-4 w-4 mr-2" />
+                              Dashboard
+                            </div>
+                          </Link>
+                          <Link href="/poems-management" className="block w-full">
+                            <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                              <FileText className="h-4 w-4 mr-2" />
+                              Poeme
+                            </div>
+                          </Link>
+                          <Link href="/subscribers" className="block w-full">
+                            <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                              <CrownIcon className="h-4 w-4 mr-2" />
+                              Abonați
+                            </div>
+                          </Link>
+                        </>
+                      )}
+
                       <Link href="/add-poem" className="block w-full">
                         <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
                           <PlusCircleIcon className="h-4 w-4 mr-2" />
                           Adăugare poem
-                        </div>
-                      </Link>
-                      <Link href="/poems-management" className="block w-full">
-                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
-                          <FileText className="h-4 w-4 mr-2" />
-                          Poeme
-                        </div>
-                      </Link>
-                      <Link href="/subscribers" className="block w-full">
-                        <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
-                          <CrownIcon className="h-4 w-4 mr-2" />
-                          Abonați
                         </div>
                       </Link>
                       <Link href="/mass-add" className="block w-full">
