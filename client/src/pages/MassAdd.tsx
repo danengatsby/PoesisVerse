@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+// Auth este gestionat de ProtectedRoute în App.tsx
 import { Upload, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 // Definirea schemei de validare pentru formular
@@ -239,20 +239,7 @@ export default function MassAdd() {
     });
   };
 
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  // Redirect dacă utilizatorul nu este autentificat
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
-      </div>
-    );
-  }
-  
-  if (!isAuthenticated) {
-    return null; // Componenta este wrapped cu ProtectedRoute în App.tsx, deci nu avem nevoie să facem redirect aici
-  }
+  // Auth este gestionat de ProtectedRoute în App.tsx
 
   return (
     <div className="container mx-auto py-8">
