@@ -144,13 +144,17 @@ export default function Header() {
                           Adăugare poem
                         </Link>
                       </Button>
-                      <Button variant="outline" className="mr-2" asChild>
-                        <Link href="/mass-add">
-                          <FilePlus className="h-4 w-4 mr-1" />
-                          Massadd
-                        </Link>
-                      </Button>
                     </>
+                  )}
+                  
+                  {/* Butonul Massadd separat pentru a ne asigura că este afișat */}
+                  {user && (
+                    <Button variant="outline" className="mr-2" asChild>
+                      <Link href="/mass-add">
+                        <FilePlus className="h-4 w-4 mr-1" />
+                        Massadd
+                      </Link>
+                    </Button>
                   )}
                   
                   {!isSubscribed && (
