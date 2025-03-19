@@ -16,6 +16,9 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import MassAdd from '@/pages/MassAdd';
 import { useAuth } from '@/hooks/useAuth';
 
+// Import components
+import Header from '@/components/Header';
+
 // Import wouter components
 import { Switch, Route, Link, useLocation, useRoute } from "wouter";
 
@@ -283,6 +286,7 @@ function App() {
         <AuthProvider>
           <div className="min-h-screen flex flex-col">
             <Navigation />
+            <Header />
             <div className="flex-1 container mx-auto py-6 px-4">
               <ErrorBoundary>
                 <DebugComponent name="Router">
