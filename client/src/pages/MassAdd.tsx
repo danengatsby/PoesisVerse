@@ -195,6 +195,51 @@ export default function MassAdd() {
     }
   };
 
+  // Funcție pentru încărcarea fișierului text cu poeme
+  const handleTextFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Verificăm tipul fișierului
+    if (!file.type.startsWith("text/") && !file.name.endsWith(".txt")) {
+      toast({
+        title: "Tip de fișier neacceptat",
+        description: "Vă rugăm să încărcați un fișier text (.txt)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTextFileUploading(true);
+    try {
+      // Citim conținutul fișierului text
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const textContent = event.target?.result as string;
+        // Actualizăm câmpul de text al formularului
+        form.setValue("poemsText", textContent);
+        toast({
+          title: "Fișier încărcat cu succes",
+          description: `Fișierul ${file.name} a fost încărcat și conținutul a fost adăugat în editor.`,
+          variant: "default",
+        });
+        setIsTextFileUploading(false);
+      };
+      reader.onerror = () => {
+        throw new Error("Eroare la citirea fișierului text");
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      console.error("Eroare la procesarea fișierului text:", error);
+      toast({
+        title: "Eroare la încărcarea fișierului text",
+        description: "Nu s-a putut procesa fișierul text",
+        variant: "destructive",
+      });
+      setIsTextFileUploading(false);
+    }
+  };
+
   const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -474,6 +519,38 @@ export default function MassAdd() {
                       </span>
                     </h3>
                     
+                    {/* Buton pentru încărcarea fișierului text */}
+                    <div className="mb-4">
+                      <input
+                        type="file"
+                        accept=".txt,text/plain"
+                        onChange={handleTextFileUpload}
+                        className="hidden"
+                        ref={textFileInputRef}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full flex items-center gap-2"
+                        onClick={() => textFileInputRef.current?.click()}
+                      >
+                        {isTextFileUploading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Se încarcă fișierul...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            <span>Încarcă fișier text cu poeme</span>
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-1 text-center">
+                        Încarcă un fișier text (.txt) cu poeme separate prin &&&
+                      </p>
+                    </div>
+                    
                     <FormField
                       control={form.control}
                       name="poemsText"
@@ -532,7 +609,7 @@ export default function MassAdd() {
                   <Button 
                     type="submit" 
                     className="w-full md:w-auto" 
-                    disabled={isSubmitting || isImageUploading || isAudioUploading}
+                    disabled={isSubmitting || isImageUploading || isAudioUploading || isTextFileUploading}
                   >
                     {isSubmitting ? (
                       <>
