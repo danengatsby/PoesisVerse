@@ -34,9 +34,11 @@ export default function MassAdd() {
   const [uploadedAudio, setUploadedAudio] = useState<string | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isAudioUploading, setIsAudioUploading] = useState(false);
+  const [isTextFileUploading, setIsTextFileUploading] = useState(false);
   const [resultSummary, setResultSummary] = useState<{ success: number; failed: number } | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+  const textFileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
