@@ -161,11 +161,21 @@ export default function MassAdd() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Verificăm tipul fișierului
+    // Verificăm tipul fișierului și mărimea (max 10MB)
     if (!file.type.startsWith("audio/")) {
       toast({
         title: "Tip de fișier neacceptat",
-        description: "Vă rugăm să încărcați un fișier audio",
+        description: "Vă rugăm să încărcați un fișier audio (MP3, WAV, OGG)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({
+        title: "Fișier prea mare",
+        description: "Fișierul audio nu trebuie să depășească 10MB",
         variant: "destructive",
       });
       return;
@@ -175,20 +185,33 @@ export default function MassAdd() {
     try {
       // Convertim fișierul audio în base64
       const reader = new FileReader();
+      
       reader.onload = (event) => {
-        const audioBase64 = event.target?.result as string;
-        setUploadedAudio(audioBase64);
+        if (event.target && event.target.result) {
+          const audioBase64 = event.target.result as string;
+          setUploadedAudio(audioBase64);
+          
+          toast({
+            title: "Fișier audio încărcat",
+            description: `Fișierul ${file.name} a fost încărcat cu succes`,
+            variant: "default",
+          });
+        } else {
+          throw new Error("Rezultatul citrii este gol");
+        }
         setIsAudioUploading(false);
       };
+      
       reader.onerror = () => {
         throw new Error("Eroare la citirea fișierului audio");
       };
+      
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Eroare la procesarea fișierului audio:", error);
       toast({
         title: "Eroare la încărcarea fișierului audio",
-        description: "Nu s-a putut procesa fișierul audio",
+        description: "Nu s-a putut procesa fișierul audio. Vă rugăm să încercați un alt fișier.",
         variant: "destructive",
       });
       setIsAudioUploading(false);
