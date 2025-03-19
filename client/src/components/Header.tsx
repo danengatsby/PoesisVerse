@@ -146,9 +146,9 @@ export default function Header() {
                           Adăugare poem
                         </Link>
                       </Button>
-                      <Button variant="default" className="mr-2 bg-green-600 hover:bg-green-700 text-white" asChild>
+                      <Button variant="default" className="mr-2 bg-green-500 hover:bg-green-700 text-white font-bold px-5 py-2" asChild>
                         <Link href="/mass-add">
-                          <FilePlus className="h-4 w-4 mr-1" />
+                          <FilePlus className="h-5 w-5 mr-2" />
                           MASS-ADD
                         </Link>
                       </Button>
@@ -263,8 +263,8 @@ export default function Header() {
                         </div>
                       </Link>
                       <Link href="/mass-add" className="block w-full">
-                        <div className="w-full text-left px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition flex items-center">
-                          <FilePlus className="h-4 w-4 mr-2" />
+                        <div className="w-full text-left px-4 py-3 bg-green-500 text-white hover:bg-green-700 transition flex items-center font-bold rounded">
+                          <FilePlus className="h-5 w-5 mr-2" />
                           MASS-ADD
                         </div>
                       </Link>
