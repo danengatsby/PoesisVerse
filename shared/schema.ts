@@ -1,3 +1,4 @@
+
 import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -10,9 +11,9 @@ export const users = pgTable("users", {
   isSubscribed: boolean("is_subscribed").default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  createdAt: timestamp("created_at").defaultNow(), // Data înscrierii
-  subscribedAt: timestamp("subscribed_at"), // Data abonării
-  subscriptionEndDate: timestamp("subscription_end_date"), // Data la care expiră abonamentul
+  createdAt: timestamp("created_at").defaultNow(),
+  subscribedAt: timestamp("subscribed_at"),
+  subscriptionEndDate: timestamp("subscription_end_date")
 });
 
 export const poems = pgTable("poems", {
@@ -22,18 +23,19 @@ export const poems = pgTable("poems", {
   author: text("author").notNull(),
   imageUrl: text("image_url"),
   audioUrl: text("audio_url"),
+  thumbnailUrl: text("thumbnail_url"),
   description: text("description"),
   year: text("year"),
   category: text("category"),
   isPremium: boolean("is_premium").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const userPoems = pgTable("user_poems", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   poemId: integer("poem_id").references(() => poems.id),
-  isBookmarked: boolean("is_bookmarked").default(false),
+  isBookmarked: boolean("is_bookmarked").default(false)
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
