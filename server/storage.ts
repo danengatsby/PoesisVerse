@@ -503,6 +503,7 @@ export class DatabaseStorage implements IStorage {
           year TEXT,
           category TEXT,
           is_premium BOOLEAN DEFAULT FALSE,
+          audio_url TEXT,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
         
