@@ -10,7 +10,7 @@ export interface IStorage {
   updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
   updateUserDetails(userId: number, details: { username?: string, email?: string }): Promise<User>; // Metodă nouă pentru actualizarea detaliilor utilizatorului
   deleteUser(userId: number): Promise<void>; // Adăugat pentru ștergerea utilizatorilor
-  
+
   // Poem operations
   getAllPoems(): Promise<Poem[]>;
   getPremiumPoems(): Promise<Poem[]>;
@@ -22,7 +22,7 @@ export interface IStorage {
   updatePoem(id: number, poem: Poem): Promise<Poem>; // Metodă nouă pentru actualizarea unui poem
   deletePoem(id: number): Promise<void>; // Metodă nouă pentru ștergerea unui poem
   getRelatedPoems(poemId: number, limit?: number): Promise<Poem[]>;
-  
+
   // User-Poem interactions
   bookmarkPoem(userId: number, poemId: number): Promise<UserPoem>;
   getUserBookmarks(userId: number): Promise<Poem[]>;
@@ -52,12 +52,12 @@ export class MemStorage implements IStorage {
     this.userIdCounter = 1;
     this.poemIdCounter = 1;
     this.userPoemIdCounter = 1;
-    
+
     // Inițializăm datele
     this.initializeUsers();
     this.initializePoems();
   }
-  
+
   private initializeUsers() {
     // Utilizator de test
     const testUser: User = {
@@ -74,7 +74,7 @@ export class MemStorage implements IStorage {
       subscriptionEndDate: null
     };
     this.users.set(testUser.id, testUser);
-    
+
     // Utilizator predefinit
     const savedUser: User = {
       id: this.userIdCounter++,
@@ -191,7 +191,7 @@ export class MemStorage implements IStorage {
         createdAt: new Date()
       }
     ];
-    
+
     // Add poems to storage and make sure they all have createdAt
     samplePoems.forEach(poem => {
       const id = this.poemIdCounter++;
@@ -211,7 +211,7 @@ export class MemStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
-  
+
   async getAllUsers(): Promise<Map<number, User>> {
     return this.users;
   }
@@ -236,7 +236,7 @@ export class MemStorage implements IStorage {
   async updateUserSubscription(userId: number, isSubscribed: boolean): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) throw new Error(`User with id ${userId} not found`);
-    
+
     const updatedUser = { ...user, isSubscribed };
     this.users.set(userId, updatedUser);
     return updatedUser;
@@ -245,7 +245,7 @@ export class MemStorage implements IStorage {
   async updateUserStripeInfo(userId: number, stripeInfo: { stripeCustomerId: string, stripeSubscriptionId: string | null }): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) throw new Error(`User with id ${userId} not found`);
-    
+
     const updatedUser = { 
       ...user, 
       stripeCustomerId: stripeInfo.stripeCustomerId,
@@ -259,14 +259,14 @@ export class MemStorage implements IStorage {
   async updateUserDetails(userId: number, details: { username?: string, email?: string }): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) throw new Error(`User with id ${userId} not found`);
-    
+
     // Actualizăm doar câmpurile care sunt furnizate
     const updatedUser = { 
       ...user,
       ...(details.username && { username: details.username }),
       ...(details.email && { email: details.email })
     };
-    
+
     this.users.set(userId, updatedUser);
     return updatedUser;
   }
@@ -283,7 +283,7 @@ export class MemStorage implements IStorage {
   async getFreePoems(): Promise<Poem[]> {
     return Array.from(this.poems.values()).filter(poem => !poem.isPremium);
   }
-  
+
   // Metodă nouă pentru a obține poemele adăugate recent
   async getRecentlyAddedPoems(): Promise<Poem[]> {
     return [...this.lastAddedPoems]; // Returnăm o copie a array-ului pentru a preveni modificările accidentale
@@ -302,66 +302,66 @@ export class MemStorage implements IStorage {
     const id = this.poemIdCounter++;
     const newPoem = { ...poem, id };
     this.poems.set(id, newPoem);
-    
+
     // Adăugăm poemul nou la colecția de poeme adăugate recent
     this.lastAddedPoems.push(newPoem);
-    
+
     // Verificăm dacă avem poeme create de utilizator și le afișăm în consolă pentru debug
     console.log(`Poem nou adăugat: ID=${newPoem.id}, Titlu=${newPoem.title}`);
     console.log(`Total poeme adăugate: ${this.lastAddedPoems.length}`);
-    
+
     return newPoem;
   }
-  
+
   async updatePoem(id: number, poem: Poem): Promise<Poem> {
     const existingPoem = await this.getPoemById(id);
     if (!existingPoem) {
       throw new Error(`Poem with id ${id} not found`);
     }
-    
+
     const updatedPoem = { ...poem, id };
     this.poems.set(id, updatedPoem);
-    
+
     // Actualizăm și în lastAddedPoems dacă există
     const index = this.lastAddedPoems.findIndex(p => p.id === id);
     if (index !== -1) {
       this.lastAddedPoems[index] = updatedPoem;
     }
-    
+
     console.log(`Poem actualizat: ID=${updatedPoem.id}, Titlu=${updatedPoem.title}`);
-    
+
     return updatedPoem;
   }
-  
+
   async deletePoem(id: number): Promise<void> {
     const existingPoem = await this.getPoemById(id);
     if (!existingPoem) {
       throw new Error(`Poem with id ${id} not found`);
     }
-    
+
     // Ștergem din colecția principală
     this.poems.delete(id);
-    
+
     // Ștergem și din lastAddedPoems dacă există
     const index = this.lastAddedPoems.findIndex(p => p.id === id);
     if (index !== -1) {
       this.lastAddedPoems.splice(index, 1);
     }
-    
+
     // Ștergem bookmark-urile asociate acestui poem
     for (const [userPoemId, userPoem] of this.userPoems.entries()) {
       if (userPoem.poemId === id) {
         this.userPoems.delete(userPoemId);
       }
     }
-    
+
     console.log(`Poem șters: ID=${id}, Titlu=${existingPoem.title}`);
   }
 
   async getRelatedPoems(poemId: number, limit: number = 2): Promise<Poem[]> {
     const poem = await this.getPoemById(poemId);
     if (!poem) return [];
-    
+
     // Get poems by the same author or in the same category
     return Array.from(this.poems.values())
       .filter(p => p.id !== poemId && (p.author === poem.author || p.category === poem.category))
@@ -372,21 +372,21 @@ export class MemStorage implements IStorage {
   async bookmarkPoem(userId: number, poemId: number): Promise<UserPoem> {
     const user = await this.getUser(userId);
     if (!user) throw new Error(`User with id ${userId} not found`);
-    
+
     const poem = await this.getPoemById(poemId);
     if (!poem) throw new Error(`Poem with id ${poemId} not found`);
-    
+
     // Check if already bookmarked
     const existing = Array.from(this.userPoems.values()).find(
       up => up.userId === userId && up.poemId === poemId
     );
-    
+
     if (existing) {
       const updated = { ...existing, isBookmarked: true };
       this.userPoems.set(existing.id, updated);
       return updated;
     }
-    
+
     // Create new bookmark
     const id = this.userPoemIdCounter++;
     const userPoem: UserPoem = {
@@ -395,7 +395,7 @@ export class MemStorage implements IStorage {
       poemId,
       isBookmarked: true
     };
-    
+
     this.userPoems.set(id, userPoem);
     return userPoem;
   }
@@ -404,14 +404,14 @@ export class MemStorage implements IStorage {
     const bookmarks = Array.from(this.userPoems.values()).filter(
       up => up.userId === userId && up.isBookmarked
     );
-    
+
     const poemPromises = bookmarks.map(async bookmark => {
       if (bookmark.poemId === null) return null;
       const poem = await this.getPoemById(bookmark.poemId);
       if (!poem) throw new Error(`Poem with id ${bookmark.poemId} not found`);
       return poem;
     });
-    
+
     const poems = await Promise.all(poemPromises);
     // Filtrăm poemele null (în caz că există)
     return poems.filter((poem): poem is Poem => poem !== null);
@@ -421,28 +421,28 @@ export class MemStorage implements IStorage {
     const bookmark = Array.from(this.userPoems.values()).find(
       up => up.userId === userId && up.poemId === poemId && up.isBookmarked
     );
-    
+
     if (bookmark) {
       const updated = { ...bookmark, isBookmarked: false };
       this.userPoems.set(bookmark.id, updated);
     }
   }
-  
+
   async deleteUser(userId: number): Promise<void> {
     if (!this.users.has(userId)) {
       throw new Error(`User with id ${userId} not found`);
     }
-    
+
     // Delete the user
     this.users.delete(userId);
-    
+
     // Delete any user-poem relationships
     const userPoemIds = Array.from(this.userPoems.values())
       .filter(up => up.userId === userId)
       .map(up => up.id);
-    
+
     userPoemIds.forEach(id => this.userPoems.delete(id));
-    
+
     console.log(`User ${userId} deleted successfully along with ${userPoemIds.length} related user-poem relationships`);
   }
 }
@@ -476,7 +476,7 @@ export class DatabaseStorage implements IStorage {
   private async initializeDatabase() {
     try {
       console.log("Inițializare bază de date PostgreSQL...");
-      
+
       // Verifică dacă tabelele există și creează-le dacă nu
       await this.pool.query(`
         CREATE TABLE IF NOT EXISTS users (
@@ -491,7 +491,7 @@ export class DatabaseStorage implements IStorage {
           subscribed_at TIMESTAMP WITH TIME ZONE,
           subscription_end_date TIMESTAMP WITH TIME ZONE
         );
-        
+
         CREATE TABLE IF NOT EXISTS poems (
           id SERIAL PRIMARY KEY,
           title TEXT NOT NULL,
@@ -506,7 +506,7 @@ export class DatabaseStorage implements IStorage {
           audio_url TEXT,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
-        
+
         CREATE TABLE IF NOT EXISTS user_poems (
           id SERIAL PRIMARY KEY,
           user_id INTEGER REFERENCES users(id),
@@ -517,7 +517,7 @@ export class DatabaseStorage implements IStorage {
 
       // După creare, verifică dacă există înregistrări în tabelul de poezii
       const { rows: poemCount } = await this.pool.query('SELECT COUNT(*) FROM poems');
-      
+
       // Dacă nu există poezii, inițializează datele
       if (parseInt(poemCount[0].count) === 0) {
         console.log("Nu există poezii, se inițializează date de pornire...");
@@ -546,7 +546,7 @@ export class DatabaseStorage implements IStorage {
         INSERT INTO poems (title, content, author, image_url, thumbnail_url, description, year, category, is_premium)
         VALUES 
           ('Invictus', 'Out of the night that covers me,\nBlack as the pit from pole to pole,\nI thank whatever gods may be\nFor my unconquerable soul.\n\nIn the fell clutch of circumstance\nI have not winced nor cried aloud.\nUnder the bludgeonings of chance\nMy head is bloody, but unbowed.\n\nBeyond this place of wrath and tears\nLooms but the Horror of the shade,\nAnd yet the menace of the years\nFinds and shall find me unafraid.\n\nIt matters not how strait the gate,\nHow charged with punishments the scroll,\nI am the master of my fate,\nI am the captain of my soul.', 'William Ernest Henley', 'https://images.unsplash.com/photo-1558786083-0fe8d4af66ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80', 'https://images.unsplash.com/photo-1558786083-0fe8d4af66ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80', 'Written in 1875 and published in 1888, \"Invictus\" is a powerful poem that speaks to the indomitable spirit of human perseverance.', '1888', 'Classic Poetry', false),
-          
+
           ('The Road Not Taken', 'Two roads diverged in a yellow wood,\nAnd sorry I could not travel both\nAnd be one traveler, long I stood\nAnd looked down one as far as I could\nTo where it bent in the undergrowth;\n\nThen took the other, as just as fair,\nAnd having perhaps the better claim,\nBecause it was grassy and wanted wear;\nThough as for that the passing there\nHad worn them really about the same,\n\nAnd both that morning equally lay\nIn leaves no step had trodden black.\nOh, I kept the first for another day!\nYet knowing how way leads on to way,\nI doubted if I should ever come back.\n\nI shall be telling this with a sigh\nSomewhere ages and ages hence:\nTwo roads diverged in a wood, and I—\nI took the one less traveled by,\nAnd that has made all the difference.', 'Robert Frost', 'https://images.unsplash.com/photo-1480497490787-505ec076689f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80', 'https://images.unsplash.com/photo-1480497490787-505ec076689f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80', 'Published in 1916, this poem uses a road as a metaphor for the journey of life.', '1916', 'Classic Poetry', false)
       `);
 
@@ -581,11 +581,11 @@ export class DatabaseStorage implements IStorage {
     try {
       const results = await this.db.select().from(users);
       const userMap = new Map<number, User>();
-      
+
       for (const user of results) {
         userMap.set(user.id, user);
       }
-      
+
       return userMap;
     } catch (error) {
       console.error("Eroare la obținerea tuturor utilizatorilor:", error);
@@ -616,16 +616,16 @@ export class DatabaseStorage implements IStorage {
       const updateData: Record<string, any> = { 
         isSubscribed: isSubscribed 
       };
-      
+
       if (isSubscribed) {
         const currentDate = new Date();
         const endDate = new Date(currentDate);
         endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
-        
+
         updateData.subscribedAt = currentDate;
         updateData.subscriptionEndDate = endDate;
       }
-      
+
       const result = await this.db.update(users)
         .set(updateData)
         .where(eq(users.id, userId))
@@ -644,17 +644,17 @@ export class DatabaseStorage implements IStorage {
         stripeSubscriptionId: stripeInfo.stripeSubscriptionId,
         isSubscribed: stripeInfo.stripeSubscriptionId !== null
       };
-      
+
       // Dacă utilizatorul este abonat, actualizăm datele de abonament
       if (stripeInfo.stripeSubscriptionId) {
         const currentDate = new Date();
         const endDate = new Date(currentDate);
         endDate.setFullYear(endDate.getFullYear() + 1); // Adăugăm 1 an - presupunem abonament anual
-        
+
         updateData.subscribedAt = currentDate;
         updateData.subscriptionEndDate = endDate;
       }
-      
+
       const result = await this.db.update(users)
         .set(updateData)
         .where(eq(users.id, userId))
@@ -665,20 +665,20 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
-  
+
   async updateUserDetails(userId: number, details: { username?: string, email?: string }): Promise<User> {
     try {
       // Creăm un obiect cu valorile care trebuie actualizate
       const updateData: Record<string, any> = {};
-      
+
       if (details.username) {
         updateData.username = details.username;
       }
-      
+
       if (details.email) {
         updateData.email = details.email;
       }
-      
+
       // Verificăm dacă avem valori de actualizat
       if (Object.keys(updateData).length === 0) {
         // Dacă nu avem nimic de actualizat, returnăm utilizatorul existent
@@ -688,17 +688,17 @@ export class DatabaseStorage implements IStorage {
         }
         return existingUser;
       }
-      
+
       // Actualizăm utilizatorul
       const result = await this.db.update(users)
         .set(updateData)
         .where(eq(users.id, userId))
         .returning();
-        
+
       if (result.length === 0) {
         throw new Error(`User with id ${userId} not found`);
       }
-      
+
       return result[0];
     } catch (error) {
       console.error("Eroare la actualizarea detaliilor utilizatorului:", error);
@@ -778,6 +778,7 @@ export class DatabaseStorage implements IStorage {
         year: poem.year,
         category: poem.category,
         isPremium: poem.isPremium,
+        audioUrl: poem.audioUrl, //Added audioUrl
         createdAt: new Date()
       }).returning();
       return result[0];
@@ -786,7 +787,7 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
-  
+
   async updatePoem(id: number, poem: Poem): Promise<Poem> {
     try {
       // Verificăm dacă poemul există
@@ -794,14 +795,14 @@ export class DatabaseStorage implements IStorage {
       if (!existingPoem) {
         throw new Error(`Poem with id ${id} not found`);
       }
-      
+
       // Verificăm dacă avem un audioUrl
       if (poem.audioUrl) {
         console.log(`Actualizare poem ${id} cu audioUrl prezent, lungime: ${poem.audioUrl.length}`);
       } else {
         console.log(`Actualizare poem ${id} fără audioUrl`);
       }
-      
+
       // Actualizăm poemul
       const result = await this.db.update(poems)
         .set({
@@ -818,18 +819,18 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(poems.id, id))
         .returning();
-      
+
       if (result.length === 0) {
         throw new Error(`Failed to update poem with id ${id}`);
       }
-      
+
       return result[0];
     } catch (error) {
       console.error("Eroare la actualizarea poemului:", error);
       throw error;
     }
   }
-  
+
   async deletePoem(id: number): Promise<void> {
     try {
       // Verificăm dacă poemul există
@@ -837,20 +838,20 @@ export class DatabaseStorage implements IStorage {
       if (!existingPoem) {
         throw new Error(`Poem with id ${id} not found`);
       }
-      
+
       // Mai întâi ștergem orice bookmark-uri asociate acestui poem pentru a evita erorile de constraint
       await this.db.delete(userPoems)
         .where(eq(userPoems.poemId, id));
-      
+
       // Apoi ștergem poemul
       const result = await this.db.delete(poems)
         .where(eq(poems.id, id))
         .returning();
-      
+
       if (result.length === 0) {
         throw new Error(`Failed to delete poem with id ${id}`);
       }
-      
+
       console.log(`Poem șters: ID=${id}, Titlu=${existingPoem.title}`);
     } catch (error) {
       console.error("Eroare la ștergerea poemului:", error);
@@ -873,7 +874,7 @@ export class DatabaseStorage implements IStorage {
           )
         )
         .limit(limit);
-      
+
       return relatedPoems;
     } catch (error) {
       console.error("Eroare la obținerea poemelor conexe:", error);
@@ -959,17 +960,17 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
-  
+
   async deleteUser(userId: number): Promise<void> {
     try {
       // Șterge mai întâi relațiile utilizator-poezii
       await this.db.delete(userPoems)
         .where(eq(userPoems.userId, userId));
-      
+
       // Șterge utilizatorul
       await this.db.delete(users)
         .where(eq(users.id, userId));
-      
+
       console.log(`User ${userId} deleted successfully from database`);
     } catch (error) {
       console.error(`Error deleting user ${userId}:`, error);
