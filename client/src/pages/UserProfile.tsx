@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
 export default function UserProfile() {
@@ -58,34 +58,5 @@ export default function UserProfile() {
         </div>
       </div>
     </div>
-  );
-}
-import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-
-export default function UserProfile() {
-  const { user } = useAuth();
-
-  return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>User Profile</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label>Username</Label>
-          <p className="text-lg">{user?.username}</p>
-        </div>
-        <div>
-          <Label>Email</Label>
-          <p className="text-lg">{user?.email}</p>
-        </div>
-        <div>
-          <Label>Role</Label>
-          <p className="text-lg capitalize">{user?.role || 'user'}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

@@ -33,6 +33,12 @@ export default function Router() {
         </WithMatch>
       </ProtectedRoute>
 
+      <ProtectedRoute path="/profile">
+        <WithMatch>
+          <UserProfile />
+        </WithMatch>
+      </ProtectedRoute>
+
       <ProtectedRoute path="/subscribe">
         <WithMatch>
           <Subscribe />
