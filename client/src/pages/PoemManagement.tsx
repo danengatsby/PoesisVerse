@@ -460,7 +460,7 @@ export default function PoemManagement() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acțiuni</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                 {poems.map((poem) => (
                   <tr key={poem.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{poem.id}</td>
