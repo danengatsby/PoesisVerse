@@ -445,9 +445,9 @@ export default function PoemManagement() {
           Nu există poeme înregistrate momentan.
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border rounded-lg">
           <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-            <table className="w-full bg-white shadow-md rounded-lg">
+            <table className="w-full bg-white shadow-sm">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -460,9 +460,9 @@ export default function PoemManagement() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acțiuni</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              <tbody className="divide-y divide-gray-200">
                 {poems.map((poem) => (
-                  <tr key={poem.id} className="hover:bg-gray-50">
+                  <tr key={poem.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{poem.id}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{poem.title}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{poem.author}</td>
