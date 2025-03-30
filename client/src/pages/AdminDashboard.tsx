@@ -433,9 +433,9 @@ export default function AdminDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[70vh]">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 bg-white z-10">
                     <TableRow>
                       <TableHead className="w-[50px]">ID</TableHead>
                       <TableHead>Titlu</TableHead>
@@ -456,7 +456,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     ) : (
                       filteredPoems.map((poem) => (
-                        <TableRow key={poem.id}>
+                        <TableRow key={poem.id} className="hover:bg-gray-50">
                           <TableCell className="font-medium">{poem.id}</TableCell>
                           <TableCell className="font-medium">{poem.title}</TableCell>
                           <TableCell>{poem.author}</TableCell>
