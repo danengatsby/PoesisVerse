@@ -1,47 +1,67 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
-import PoemPage from "./pages/PoemPage";
+
+import { Route, Switch } from "wouter";
+import { WithMatch } from "./components/WithMatch";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import Home from "./pages/Home";
+import AuthPage from "./pages/AuthPage";
+import Subscribe from "./pages/Subscribe";
+import AddPoem from "./pages/AddPoem";
+import Subscribers from "./pages/Subscribers";
+import PoemManagement from "./pages/PoemManagement";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserProfile from "./pages/UserProfile";
+import NotFound from "./pages/not-found";
 
-
-function Header() {
+export default function Router() {
   return (
-    <header>
-      <nav>
-        <Link to="/poems">Poems</Link>
-        <Link to="/admin-dashboard">Admin</Link>
-        <Link to="/profile">Profile</Link> {/* Added Profile link */}
-      </nav>
-    </header>
+    <Switch>
+      <Route path="/">
+        <WithMatch>
+          <Home />
+        </WithMatch>
+      </Route>
+
+      <Route path="/auth">
+        <WithMatch>
+          <AuthPage />
+        </WithMatch>
+      </Route>
+
+      <ProtectedRoute path="/profile">
+        <WithMatch>
+          <UserProfile />
+        </WithMatch>
+      </ProtectedRoute>
+
+      <ProtectedRoute path="/subscribe">
+        <WithMatch>
+          <Subscribe />
+        </WithMatch>
+      </ProtectedRoute>
+
+      <ProtectedRoute path="/admin-dashboard">
+        <WithMatch>
+          <AdminDashboard />
+        </WithMatch>
+      </ProtectedRoute>
+
+      <ProtectedRoute path="/poems-management">
+        <WithMatch>
+          <PoemManagement />
+        </WithMatch>
+      </ProtectedRoute>
+
+      <ProtectedRoute path="/subscribers">
+        <WithMatch>
+          <Subscribers />
+        </WithMatch>
+      </ProtectedRoute>
+
+      <Route path="/:rest*">
+        <WithMatch>
+          <NotFound />
+        </WithMatch>
+      </Route>
+    </Switch>
   );
 }
-
-function App() {
-  return (
-    <Router>
-      <div>
-        <Header />
-        <Route path="/poems/:id" component={PoemPage} />
-        <Route path="/admin-dashboard" component={AdminDashboard} />
-        <Route path="/profile" component={UserProfile} /> {/* Added Profile route */}
-      </div>
-    </Router>
-  );
-}
-
-// Dummy components for compilation
-const UserProfile = () => {
-  return (
-    <div>
-      <h1>User Profile</h1>
-      <p>Logged in user information would go here.</p>
-      <button>Logout</button>
-    </div>
-  );
-};
-
-const PoemPage = () => <div>Poem Page</div>;
-const AdminDashboard = () => <div>Admin Dashboard</div>;
-
-export default App;
