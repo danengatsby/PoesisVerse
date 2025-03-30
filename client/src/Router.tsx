@@ -15,6 +15,12 @@ import NotFound from "./pages/not-found";
 export default function Router() {
   return (
     <Switch>
+      <Route path="/">
+        <WithMatch>
+          <Home />
+        </WithMatch>
+      </Route>
+
       <Route path="/auth">
         <WithMatch>
           <AuthPage />
@@ -56,12 +62,6 @@ export default function Router() {
           <Subscribers />
         </WithMatch>
       </ProtectedRoute>
-
-      <Route path="/">
-        <WithMatch>
-          <Home />
-        </WithMatch>
-      </Route>
 
       <Route path="/:rest*">
         <WithMatch>
