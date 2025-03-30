@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,7 +33,7 @@ export default function UserProfile() {
     <div className="container mx-auto p-6">
       <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Profilul meu</h1>
-        
+
         <div className="space-y-4">
           <div className="border-b pb-4">
             <h2 className="text-lg font-semibold mb-2">Informații cont</h2>
@@ -50,8 +49,8 @@ export default function UserProfile() {
               <p><span className="font-medium">Zile rămase:</span> {user.subscriptionInfo.daysRemaining}</p>
             </div>
           )}
-          
-          <div className="pt-4">
+
+          <div className="mt-6">
             <Button onClick={handleLogout} variant="destructive">
               Deconectare
             </Button>

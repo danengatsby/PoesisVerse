@@ -8,6 +8,7 @@ import LoginModal from "./auth/LoginModal";
 import SignupModal from "./auth/SignupModal";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { UserCircle } from "lucide-react"; // Added import for UserCircle icon
 
 export default function Header() {
   const { isAuthenticated, user, logout, isSubscribed } = useAuth();
