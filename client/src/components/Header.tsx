@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CrownIcon, PlusCircleIcon, LogOutIcon, MenuIcon, MailIcon, FileText, LayoutDashboard, FilePlus, Upload } from "lucide-react";
+import { CrownIcon, PlusCircleIcon, LogOutIcon, MenuIcon, MailIcon, FileText, LayoutDashboard, FilePlus, Upload, User } from "lucide-react";
 import LoginModal from "./auth/LoginModal";
 import SignupModal from "./auth/SignupModal";
 import { useToast } from "@/hooks/use-toast";
@@ -43,13 +43,13 @@ export default function Header() {
     setLocation("/subscribe");
     setShowMobileMenu(false);
   };
-  
+
   const testEmail = async () => {
     try {
       setIsTestingEmail(true);
       const response = await apiRequest("POST", "/api/test-email");
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
           title: "Email trimis cu succes",
@@ -85,7 +85,7 @@ export default function Header() {
                 <span className="font-heading text-xl text-primary font-bold">PoesisVerse</span>
               </Link>
             </div>
-            
+
             <div className="hidden md:flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
@@ -112,29 +112,20 @@ export default function Header() {
                       </div>
                     )}
                   </div>
-                  
-                  {/* Simplificat - toate butoanele pentru admin */}
-                  {isAuthenticated && user?.username === "Administrator" && (
-                    <>
-                      <Button variant="outline" className="mr-2" asChild>
-                        <Link href="/admin-dashboard">
-                          <LayoutDashboard className="h-4 w-4 mr-1" />
-                          Dashboard
-                        </Link>
-                      </Button>
-                      <Button variant="outline" className="mr-2" asChild>
-                        <Link href="/poems-management">
-                          <FileText className="h-4 w-4 mr-1" />
-                          Poeme
-                        </Link>
-                      </Button>
-                      <Button variant="outline" className="mr-2" asChild>
-                        <Link href="/subscribers">
-                          <CrownIcon className="h-4 w-4 mr-1" />
-                          Abonați
-                        </Link>
-                      </Button>
-                    </>
+
+                  <Button variant="outline" className="mr-2" asChild>
+                    <Link href="/profile">
+                      <User className="h-4 w-4 mr-1" />
+                      Profil
+                    </Link>
+                  </Button>
+                  {user?.username === "Administrator" && (
+                    <Button variant="outline" className="mr-2" asChild>
+                      <Link href="/admin-dashboard">
+                        <LayoutDashboard className="h-4 w-4 mr-1" />
+                        Dashboard
+                      </Link>
+                    </Button>
                   )}
 
                   {/* Toate butoanele pentru utilizatori autentificați */}
@@ -154,16 +145,14 @@ export default function Header() {
                       </Button>
                     </>
                   )}
-                  
+
                   {!isSubscribed && (
                     <Button variant="default" className="mr-2 bg-amber-500 hover:bg-amber-600" onClick={navigateToSubscribe}>
                       <CrownIcon className="h-4 w-4 mr-1" />
                       Abonare
                     </Button>
                   )}
-                  
-                  {/* Butonul de testare email a fost eliminat */}
-                  
+
                   <Button variant="ghost" onClick={handleLogout}>
                     <LogOutIcon className="h-4 w-4 mr-1" />
                     Deconectare
@@ -180,7 +169,7 @@ export default function Header() {
                 </>
               )}
             </div>
-            
+
             <div className="md:hidden flex items-center">
               <button 
                 onClick={toggleMobileMenu}
@@ -192,7 +181,7 @@ export default function Header() {
             </div>
           </div>
         </div>
-        
+
         {/* Mobile menu */}
         {showMobileMenu && (
           <div className="md:hidden bg-white border-t border-neutral-200 py-2">
@@ -220,8 +209,13 @@ export default function Header() {
                       </div>
                     )}
                   </div>
-                  
-                  {/* Admin links */}
+
+                  <Link href="/profile" className="block w-full">
+                    <div className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      Profil
+                    </div>
+                  </Link>
                   {user?.username === "Administrator" && (
                     <>
                       <Link href="/admin-dashboard" className="block w-full">
@@ -262,7 +256,7 @@ export default function Header() {
                       </Link>
                     </>
                   )}
-                  
+
                   {!isSubscribed && (
                     <button 
                       className="w-full text-left px-4 py-2 rounded-md bg-amber-500 text-white hover:bg-amber-600 transition flex items-center"
@@ -272,9 +266,7 @@ export default function Header() {
                       Abonare
                     </button>
                   )}
-                  
-                  {/* Butonul de testare email eliminat și din meniul mobil */}
-                  
+
                   <button 
                     className="w-full text-left px-4 py-2 rounded-md text-neutral-800 hover:bg-neutral-100 transition flex items-center"
                     onClick={handleLogout}
@@ -313,7 +305,7 @@ export default function Header() {
           setShowSignupModal(true);
         }}
       />
-      
+
       <SignupModal 
         isOpen={showSignupModal} 
         onClose={() => setShowSignupModal(false)}
