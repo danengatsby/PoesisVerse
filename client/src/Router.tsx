@@ -57,13 +57,13 @@ export default function Router() {
         </WithMatch>
       </ProtectedRoute>
 
-      <Route path="/">
+      <Route exact path="/">
         <WithMatch>
           <Home />
         </WithMatch>
       </Route>
 
-      <Route path="/:rest*">
+      <Route>
         <WithMatch>
           <NotFound />
         </WithMatch>
