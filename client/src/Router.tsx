@@ -57,7 +57,7 @@ export default function Router() {
         </WithMatch>
       </ProtectedRoute>
 
-      <Route exact path="/">
+      <Route path="/" exact>
         <WithMatch>
           <Home />
         </WithMatch>
